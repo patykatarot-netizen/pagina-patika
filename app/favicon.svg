@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="none">
+  <!-- Card body -->
+  <rect x="2" y="1" width="28" height="30" rx="4" fill="#0a0a0f" stroke="#d4a853" stroke-width="2"/>
+  <!-- Inner frame -->
+  <rect x="5" y="4" width="22" height="24" rx="2" stroke="#d4a853" stroke-opacity="0.3" stroke-width="0.75"/>
+  <!-- The Star — 4-point sparkle -->
+  <path d="M16,9 L18,14 L23,16 L18,18 L16,23 L14,18 L9,16 L14,14 Z" fill="#d4a853"/>
+</svg>

@@ -1,0 +1,143 @@
+@import "tailwindcss";
+
+/*
+ * Patyka Tarot — Liquid Glass Aesthetic
+ * Mac 2026 / cinematic dark theme with glassmorphism.
+ *
+ * Color palette:
+ *   --bg-primary:    #0a0a0f  Page background (near-black with blue undertone)
+ *   --bg-glass:      rgba(255,255,255,0.04)  Glass panel fill
+ *   --border-glass:  rgba(255,255,255,0.08)  Glass panel border
+ *   --accent-gold:   #d4a853  CTAs, highlights, key text
+ *   --accent-purple: #8b5cf6  Gradient partner, links
+ *   --text-primary:  #f5f0eb  Body text (warm off-white)
+ *   --text-secondary: rgba(245,240,235,0.6)  Muted text
+ */
+
+:root {
+  --bg-primary: #0a0a0f;
+  --bg-glass: rgba(255, 255, 255, 0.04);
+  --border-glass: rgba(255, 255, 255, 0.08);
+  --accent-gold: #d4a853;
+  --accent-purple: #8b5cf6;
+  --text-primary: #f5f0eb;
+  --text-secondary: rgba(245, 240, 235, 0.6);
+}
+
+/* ── Tailwind v4 theme mapping ── */
+@theme inline {
+  --color-bg-primary: var(--bg-primary);
+  --color-bg-glass: var(--bg-glass);
+  --color-border-glass: var(--border-glass);
+  --color-accent-gold: var(--accent-gold);
+  --color-accent-purple: var(--accent-purple);
+  --color-text-primary: var(--text-primary);
+  --color-text-secondary: var(--text-secondary);
+
+  /* Font families — set by next/font in layout.tsx via CSS variables */
+  --font-heading: var(--font-instrument-serif);
+  --font-body: var(--font-dm-sans);
+}
+
+/* ── Base: dark theme ── */
+body {
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  font-family: var(--font-body);
+  font-size: 18px; /* Base size increased for readability */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Larger body text for desktop */
+@media (min-width: 768px) {
+  body {
+    font-size: 20px;
+  }
+}
+
+/* Smooth scrolling for hash-link navigation */
+html {
+  scroll-behavior: smooth;
+}
+
+/* ── Liquid Glass utility class ──
+ *
+ * The ::before pseudo-element creates a 1px gradient border that only
+ * renders on the outer edge. This simulates light catching the edge of
+ * a glass panel, which is the signature of the Liquid Glass aesthetic.
+ *
+ * How it works:
+ *   1. ::before covers the entire element (inset: 0).
+ *   2. A linear-gradient fills it, simulating angled light.
+ *   3. mask-composite: exclude punches a hole in the center, leaving
+ *      only the outer 1px border visible.
+ *   4. The -webkit-mask-composite: xor is the Safari equivalent.
+ */
+
+.liquid-glass {
+  position: relative;
+  background: var(--bg-glass);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-radius: 12px;
+  /* Mobile: lighter blur for performance */
+}
+
+@media (max-width: 767px) {
+  .liquid-glass {
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+  }
+}
+
+.liquid-glass::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.12),
+    rgba(255, 255, 255, 0.03) 50%,
+    transparent 80%
+  );
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask-composite: exclude;
+  -webkit-mask: linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* Ensure child content renders above the ::before pseudo-element */
+.liquid-glass > * {
+  position: relative;
+  z-index: 2;
+}
+
+/* ── Dark scrollbar (WebKit) ── */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--bg-primary);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border-glass);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.15);
+}
+
+/* ── Selection color ── */
+::selection {
+  background: rgba(212, 168, 83, 0.3); /* accent-gold at 30% */
+  color: var(--text-primary);
+}
