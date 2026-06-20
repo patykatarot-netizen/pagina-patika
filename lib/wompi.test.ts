@@ -10,7 +10,7 @@
  *     missing signature, length mismatch, different payload
  */
 
-import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
+import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { initCheckout, verifyWebhookSignature } from "./wompi";
 import crypto from "node:crypto";
 

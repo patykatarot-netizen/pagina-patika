@@ -34,11 +34,11 @@ import SocialProof from '@/components/landing/SocialProof';
 import BioSection from '@/components/landing/BioSection';
 import BookingForm from '@/components/booking/BookingForm';
 import { db } from '@/lib/db';
-import { services, testimonials } from '@/db/schema';
+import { services, testimonials, socialStats } from '@/db/schema';
 import type { Service, Testimonial } from '@/types';
 
-/** Social proof stats — these are static for now, updated manually. */
-const SOCIAL_STATS = [
+/** Fallback stats when DB is unavailable or table is empty. */
+const FALLBACK_STATS = [
   { label: 'en TikTok', value: 10_000 },
   { label: 'Me gusta', value: 63_900 },
 ];
@@ -46,18 +46,25 @@ const SOCIAL_STATS = [
 export default async function Home() {
   let servicesList: Service[] = [];
   let testimonialsList: Testimonial[] = [];
+  let statsList = FALLBACK_STATS;
 
   // ── SSR: query active services and testimonials from PostgreSQL ──
   try {
-    servicesList = await db
+    servicesList = (await db
       .select()
       .from(services)
-      .where(eq(services.isActive, true));
+      .where(eq(services.isActive, true))) as Service[];
 
     testimonialsList = await db
       .select()
       .from(testimonials)
       .where(eq(testimonials.isActive, true));
+
+    // Query social stats from DB — use fallback if table is empty
+    const dbStats = await db.select().from(socialStats);
+    if (dbStats.length > 0) {
+      statsList = dbStats.map((s) => ({ label: s.label, value: s.value }));
+    }
   } catch (error) {
     // Graceful degradation: if the DB is unavailable (e.g., local
     // development without PostgreSQL), render with empty data.
@@ -91,7 +98,7 @@ export default async function Home() {
         </section>
 
         <BrujitipsGrid />
-        <SocialProof stats={SOCIAL_STATS} testimonials={testimonialsList} />
+        <SocialProof stats={statsList} testimonials={testimonialsList} />
         <BioSection />
       </main>
       <Footer />

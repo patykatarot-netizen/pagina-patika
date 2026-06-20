@@ -1,50 +1,98 @@
 @import "tailwindcss";
 
 /*
- * Patyka Tarot — Liquid Glass Aesthetic
- * Mac 2026 / cinematic dark theme with glassmorphism.
+ * Patyka Tarot — Fundamentos Visuales y Materialidad (PDR v2.0)
+ * Mac 2026 / cinematic dark theme with glassmorphism 2.0.
  *
- * Color palette:
- *   --bg-primary:    #0a0a0f  Page background (near-black with blue undertone)
- *   --bg-glass:      rgba(255,255,255,0.04)  Glass panel fill
- *   --border-glass:  rgba(255,255,255,0.08)  Glass panel border
- *   --accent-gold:   #d4a853  CTAs, highlights, key text
- *   --accent-purple: #8b5cf6  Gradient partner, links
- *   --text-primary:  #f5f0eb  Body text (warm off-white)
- *   --text-secondary: rgba(245,240,235,0.6)  Muted text
+ * Color palette (sección 3 del PDR):
+ *   --bg-primary:         #0d0520    Page background (deep purple)
+ *   --bg-secondary:       #1a0a3e    Alternate section background
+ *   --bg-glass:           rgba(255,255,255,0.06)  Glass panel fill
+ *   --bg-card:            rgba(139,92,246,0.08)    Card background
+ *   --border-glass:       rgba(212,168,83,0.12)     Glass panel border (gold-tinted)
+ *   --border-gold:        rgba(212,168,83,0.3)      Gold border accent
+ *   --accent-gold:        #d4a853    CTAs, prices, highlights
+ *   --accent-yellow:      #f5d76e    Badges, stars, decorations
+ *   --accent-purple:      #a855f7    Vibrant purple — gradients, links
+ *   --accent-purple-deep: #7c3aed    Deep purple — card backgrounds
+ *   --text-primary:       #f5f0eb    Body text (warm off-white)
+ *   --text-secondary:     rgba(245,240,235,0.65)  Muted text
+ *   --text-on-purple:     #f5f0eb    Text on purple backgrounds
+ *   --text-gold:          #d4a853    Gold text on dark backgrounds
  */
 
+/* ═════════════════════════════════════════════════════════════════
+   1. PALETA DE COLORES (PDR §3)
+   ═════════════════════════════════════════════════════════════════ */
 :root {
-  --bg-primary: #0a0a0f;
-  --bg-glass: rgba(255, 255, 255, 0.04);
-  --border-glass: rgba(255, 255, 255, 0.08);
-  --accent-gold: #d4a853;
-  --accent-purple: #8b5cf6;
-  --text-primary: #f5f0eb;
-  --text-secondary: rgba(245, 240, 235, 0.6);
+  /* Fondos */
+  --bg-primary:    #0d0520;
+  --bg-secondary:  #1a0a3e;
+  --bg-glass:      rgba(255, 255, 255, 0.06);
+  --bg-card:       rgba(139, 92, 246, 0.08);
+
+  /* Bordes glass */
+  --border-glass:  rgba(212, 168, 83, 0.12);
+  --border-gold:   rgba(212, 168, 83, 0.3);
+
+  /* Acentos principales */
+  --accent-gold:   #d4a853;
+  --accent-yellow: #f5d76e;
+  --accent-purple: #a855f7;
+  --accent-purple-deep: #7c3aed;
+
+  /* Textos */
+  --text-primary:  #f5f0eb;
+  --text-secondary: rgba(245, 240, 235, 0.65);
+  --text-on-purple: #f5f0eb;
+  --text-gold:     #d4a853;
 }
 
-/* ── Tailwind v4 theme mapping ── */
+/* ═════════════════════════════════════════════════════════════════
+   2. TAILWIND v4 THEME MAPPING
+   ═════════════════════════════════════════════════════════════════ */
 @theme inline {
+  /* Fondos */
   --color-bg-primary: var(--bg-primary);
+  --color-bg-secondary: var(--bg-secondary);
   --color-bg-glass: var(--bg-glass);
+  --color-bg-card: var(--bg-card);
+
+  /* Bordes */
   --color-border-glass: var(--border-glass);
+  --color-border-gold: var(--border-gold);
+
+  /* Acentos */
   --color-accent-gold: var(--accent-gold);
+  --color-accent-yellow: var(--accent-yellow);
   --color-accent-purple: var(--accent-purple);
+  --color-accent-purple-deep: var(--accent-purple-deep);
+
+  /* Textos */
   --color-text-primary: var(--text-primary);
   --color-text-secondary: var(--text-secondary);
+  --color-text-on-purple: var(--text-on-purple);
+  --color-text-gold: var(--text-gold);
 
   /* Font families — set by next/font in layout.tsx via CSS variables */
   --font-heading: var(--font-instrument-serif);
   --font-body: var(--font-dm-sans);
+
+  /* Animations */
+  --animate-bounce-soft: bounce-soft 2s ease-in-out infinite;
 }
 
-/* ── Base: dark theme ── */
+/* ═════════════════════════════════════════════════════════════════
+   3. BASE — HTML Y BODY
+   ═════════════════════════════════════════════════════════════════ */
+html {
+  scroll-behavior: smooth;
+}
+
 body {
   background: var(--bg-primary);
   color: var(--text-primary);
   font-family: var(--font-body);
-  font-size: 18px; /* Base size increased for readability */
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
@@ -56,32 +104,143 @@ body {
   }
 }
 
-/* Smooth scrolling for hash-link navigation */
-html {
-  scroll-behavior: smooth;
+/* ═════════════════════════════════════════════════════════════════
+   4. SQUIRCLES — RADIOS DE CURVATURA CONTINUA (PDR §6.1)
+   ═════════════════════════════════════════════════════════════════
+   Superellipse approximation — eliminates visual tension of
+   standard circular border-radius corners.                        */
+.squircle-sm  { border-radius: 8px; }
+.squircle     { border-radius: 12px; }
+.squircle-lg  { border-radius: 16px; }
+.squircle-xl  { border-radius: 24px; }
+
+/* ═════════════════════════════════════════════════════════════════
+   5. GLASSMORPHISM 2.0 — STACK DE MATERIALES (PDR §6.2)
+   ═════════════════════════════════════════════════════════════════
+   Four blur/opacity levels simulating real physical depth.
+
+   Material          | Blur  | Opacity | Specular border | Usage
+   ───────────────── | ───── | ─────── | ─────────────── | ──────
+   Glass Primary     | 20px  | 0.06    | 1px @ 15%       | Service cards, main containers
+   Glass Secondary   | 10px  | 0.04    | 1px @ 8%        | Inputs, form fields
+   Glass Elevated    | 40px  | 0.12    | 1px @ 20%       | Modals, drawers, overlays
+   Glass Subtle      | 5px   | 0.02    | 1px @ 5%        | Badges, chips, tags           */
+
+/* ── Glass Primary — blur 20px, cards principales ── */
+.glass-primary {
+  position: relative;
+  background: var(--bg-glass);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-radius: 12px;
+  border: 1px solid var(--border-glass);
 }
 
-/* ── Liquid Glass utility class ──
+/* ── Glass Secondary — blur 10px, inputs, campos ── */
+.glass-secondary {
+  position: relative;
+  background: rgba(255, 255, 255, 0.04);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-radius: 8px;
+  border: 1px solid rgba(212, 168, 83, 0.08);
+}
+
+/* ── Glass Elevated — blur 40px, modales, drawers ── */
+.glass-elevated {
+  position: relative;
+  background: rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(40px);
+  -webkit-backdrop-filter: blur(40px);
+  border-radius: 16px;
+  border: 1px solid rgba(212, 168, 83, 0.2);
+}
+
+/* ── Glass Subtle — blur 5px, badges, chips ── */
+.glass-subtle {
+  position: relative;
+  background: rgba(255, 255, 255, 0.02);
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
+  border-radius: 8px;
+  border: 1px solid rgba(212, 168, 83, 0.05);
+}
+
+/* ── Specular Highlight (borde de luz) — glass-primary y glass-elevated ──
  *
  * The ::before pseudo-element creates a 1px gradient border that only
  * renders on the outer edge. This simulates light catching the edge of
- * a glass panel, which is the signature of the Liquid Glass aesthetic.
+ * a glass panel, the signature of the Liquid Glass aesthetic.
  *
  * How it works:
  *   1. ::before covers the entire element (inset: 0).
  *   2. A linear-gradient fills it, simulating angled light.
  *   3. mask-composite: exclude punches a hole in the center, leaving
  *      only the outer 1px border visible.
- *   4. The -webkit-mask-composite: xor is the Safari equivalent.
- */
+ *   4. The -webkit-mask-composite: xor is the Safari equivalent.           */
+.glass-primary::before,
+.glass-elevated::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.15) 0%,
+    rgba(255, 255, 255, 0.05) 40%,
+    transparent 80%
+  );
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask-composite: exclude;
+  -webkit-mask: linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  pointer-events: none;
+  z-index: 1;
+}
 
+/* Ensure child content renders above the specular highlight */
+.glass-primary > *,
+.glass-elevated > * {
+  position: relative;
+  z-index: 2;
+}
+
+/* ── Mobile optimization: reduce blur by 50% for performance (PDR §6.2) ── */
+@media (max-width: 767px) {
+  .glass-primary {
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+  }
+
+  .glass-secondary {
+    backdrop-filter: blur(5px);
+    -webkit-backdrop-filter: blur(5px);
+  }
+
+  .glass-elevated {
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+  }
+
+  .glass-subtle {
+    backdrop-filter: blur(3px);
+    -webkit-backdrop-filter: blur(3px);
+  }
+}
+
+/* ═════════════════════════════════════════════════════════════════
+   6. LEGACY .liquid-glass — alias de glass-primary
+   ═════════════════════════════════════════════════════════════════
+   Mantenido para compatibilidad con componentes existentes.
+   Se migrará gradualmente a los niveles específicos del stack.     */
 .liquid-glass {
   position: relative;
   background: var(--bg-glass);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   border-radius: 12px;
-  /* Mobile: lighter blur for performance */
 }
 
 @media (max-width: 767px) {
@@ -99,8 +258,8 @@ html {
   padding: 1px;
   background: linear-gradient(
     135deg,
-    rgba(255, 255, 255, 0.12),
-    rgba(255, 255, 255, 0.03) 50%,
+    rgba(255, 255, 255, 0.15),
+    rgba(255, 255, 255, 0.05) 40%,
     transparent 80%
   );
   mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
@@ -112,13 +271,150 @@ html {
   z-index: 1;
 }
 
-/* Ensure child content renders above the ::before pseudo-element */
 .liquid-glass > * {
   position: relative;
   z-index: 2;
 }
 
-/* ── Dark scrollbar (WebKit) ── */
+/* ═════════════════════════════════════════════════════════════════
+   7. SPRING CURVES — MICRO-INTERACCIONES CON MASA (PDR §7.1)
+   ═════════════════════════════════════════════════════════════════
+   Curvas de spring que simulan física real en lugar de easing lineal.
+
+   Curve   | mass | stiffness | damping | Usage
+   ─────── | ──── | ───────── | ─────── | ─────
+   Bounce  | 1    | 300       | 25      | Card hover, particles
+   Smooth  | 1    | 200       | 30      | Drawer, step transitions
+   Snap    | 0.5  | 400       | 20      | Button click, modal close      */
+
+.spring-bounce {
+  transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.spring-smooth {
+  transition: all 0.3s cubic-bezier(0.25, 1, 0.5, 1);
+}
+
+.spring-snap {
+  transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ═════════════════════════════════════════════════════════════════
+   8. TIPOGRAFÍA DE PRECISIÓN — TRACKING Y LEADING (PDR §6.3)
+   ═════════════════════════════════════════════════════════════════
+   Jerarquía establecida por espacio negativo, no solo por tamaño.
+   Tracking (letter-spacing) dinámico por tamaño de texto.
+   Leading (line-height) por contexto de lectura.                    */
+
+/* ── Tracking por tamaño ── */
+.text-display  { letter-spacing: -0.02em; }  /* H1 — más compacto */
+.text-heading  { letter-spacing: -0.01em; }  /* H2, H3 */
+.text-body     { letter-spacing: 0; }        /* Párrafos — natural */
+.text-caption  { letter-spacing: 0.02em; }   /* Notas — más aire */
+
+/* ── Leading por contexto ── */
+.leading-tight   { line-height: 1.15; }  /* Títulos — compacto */
+.leading-normal  { line-height: 1.6; }   /* Body — legibilidad */
+.leading-relaxed { line-height: 1.75; }  /* Notas — aireado */
+
+/* ═════════════════════════════════════════════════════════════════
+   9. ANIMACIONES (PDR §7.2, §7.3, §13.3)
+   ═════════════════════════════════════════════════════════════════ */
+
+/* ── Shimmer loading — desplazamiento de brillo ── */
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.loading-shimmer {
+  background: linear-gradient(
+    90deg,
+    var(--bg-glass) 25%,
+    rgba(255, 255, 255, 0.08) 50%,
+    var(--bg-glass) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s linear infinite;
+}
+
+/* ── Float particles — partículas decorativas del Hero ── */
+@keyframes float-particle {
+  0%, 100% { transform: translateY(0) rotate(0deg); opacity: 0.3; }
+  50% { transform: translateY(-20px) rotate(180deg); opacity: 0.8; }
+}
+
+.animate-float-particle {
+  animation: float-particle 6s ease-in-out infinite;
+}
+
+/* ── Glow pulse — pulso dorado en CTAs ── */
+@keyframes glow-pulse {
+  0%, 100% { box-shadow: 0 0 15px rgba(212, 168, 83, 0.2); }
+  50% { box-shadow: 0 0 25px rgba(212, 168, 83, 0.4); }
+}
+
+/* ── Shake error — vibración para validación fallida ── */
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(-3px); }
+  40% { transform: translateX(3px); }
+  60% { transform: translateX(-2px); }
+  80% { transform: translateX(2px); }
+}
+
+.shake-error {
+  animation: shake 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* ── Desaturate error — reacción orgánica a error de servidor ── */
+@keyframes desaturate {
+  0% { filter: saturate(1); }
+  50% { filter: saturate(0.3); }
+  100% { filter: saturate(1); }
+}
+
+.desaturate-error {
+  animation: desaturate 0.5s ease-in-out;
+}
+
+/* ── Gradient shift — gradiente animado en el Hero ── */
+@keyframes gradient-shift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+/* ── Float — elementos decorativos flotantes ── */
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+
+/* ── Bounce soft — botón flotante de WhatsApp ── */
+@keyframes bounce-soft {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-5px); }
+}
+
+/* ═════════════════════════════════════════════════════════════════
+   10. ACCESIBILIDAD — PREFERS-REDUCED-MOTION (PDR §13.1)
+   ═════════════════════════════════════════════════════════════════
+   Respect user preference for reduced motion.
+   Stops all decorative animations and transitions.                */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* ═════════════════════════════════════════════════════════════════
+   11. SCROLLBAR — DARK THEME (WEBKIT)
+   ═════════════════════════════════════════════════════════════════ */
 ::-webkit-scrollbar {
   width: 8px;
 }
@@ -128,16 +424,18 @@ html {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: var(--border-glass);
+  background: rgba(212, 168, 83, 0.2);
   border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.15);
+  background: rgba(212, 168, 83, 0.35);
 }
 
-/* ── Selection color ── */
+/* ═════════════════════════════════════════════════════════════════
+   12. SELECTION COLOR
+   ═════════════════════════════════════════════════════════════════ */
 ::selection {
-  background: rgba(212, 168, 83, 0.3); /* accent-gold at 30% */
+  background: rgba(212, 168, 83, 0.3);
   color: var(--text-primary);
 }

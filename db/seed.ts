@@ -17,6 +17,7 @@
 import "dotenv/config";
 import postgres from "postgres";
 import { drizzle } from "drizzle-orm/postgres-js";
+import { eq } from "drizzle-orm";
 import * as schema from "./schema";
 
 const connectionString = process.env.DATABASE_URL;
@@ -29,54 +30,137 @@ const client = postgres(connectionString);
 const db = drizzle(client, { schema });
 
 /**
- * Seed services — these are placeholders Patyka will customize.
+ * Seed services — definitive real services for Patyka Tarot.
  * Prices are in Colombian Pesos (COP).
+ *
+ * availableDays is a bitmask:
+ *   Mon=1  Tue=2  Wed=4  Thu=8  Fri=16  Sat=32  Sun=64
  */
 const seedServices = [
+  // ── Preguntas Puntuales (WhatsApp only) ──
   {
-    name: "Lectura General de Tarot",
+    name: "1 Pregunta Puntual",
     description:
-      "Lectura completa de cartas para guía espiritual y claridad",
-    priceCop: 80000,
-    durationMin: 60,
+      "Una consulta específica respondida el mismo día por WhatsApp",
+    priceCop: 10000,
+    durationMin: 5,
+    availableDays: 127,
+    availableSlots: "[]",
+    bookingType: "whatsapp_only",
+    category: "pregunta",
   },
   {
-    name: "Lectura Express",
+    name: "2 Preguntas Puntuales",
     description:
-      "Consulta rápida de 30 min para preguntas específicas",
-    priceCop: 50000,
+      "Dos consultas específicas respondidas el mismo día por WhatsApp",
+    priceCop: 18000,
+    durationMin: 10,
+    availableDays: 127,
+    availableSlots: "[]",
+    bookingType: "whatsapp_only",
+    category: "pregunta",
+  },
+  {
+    name: "3 Preguntas Puntuales",
+    description:
+      "Tres consultas específicas respondidas el mismo día por WhatsApp",
+    priceCop: 25000,
+    durationMin: 15,
+    availableDays: 127,
+    availableSlots: "[]",
+    bookingType: "whatsapp_only",
+    category: "pregunta",
+  },
+
+  // ── Lectura Temática (Mié, Vie) ──
+  {
+    name: "Lectura Temática",
+    description:
+      "Lectura enfocada en Amor, Dinero o Trabajo — 30 minutos",
+    priceCop: 35000,
     durationMin: 30,
+    availableDays: 20,
+    availableSlots: JSON.stringify([
+      "08:00", "09:00", "10:00", "11:00", "12:00",
+      "14:00", "15:00", "16:00", "17:00",
+    ]),
+    bookingType: "web",
+    category: "tematica",
   },
+
+  // ── Lectura Completa (Lun, Mar, Jue) ──
   {
-    name: "Brujitip Personalizado",
+    name: "Lectura Completa + Ritual Energético",
     description:
-      "Ritual o consejo energético hecho a tu medida",
-    priceCop: 120000,
-    durationMin: 45,
+      "Lectura completa de cartas + ritual energético personalizado — 60 minutos",
+    priceCop: 70000,
+    durationMin: 60,
+    availableDays: 11,
+    availableSlots: JSON.stringify([
+      "08:00", "09:30", "11:00",
+      "14:00", "15:30", "17:00",
+    ]),
+    bookingType: "web",
+    category: "completa",
+  },
+
+  // ── Trabajo Energético (Próximamente) ──
+  {
+    name: "Trabajo Energético",
+    description:
+      "Limpieza y alineación energética personalizada — Próximamente",
+    priceCop: 0,
+    durationMin: 0,
+    availableDays: 0,
+    availableSlots: "[]",
+    bookingType: "web",
+    category: "energetico",
   },
 ];
 
 async function main() {
-  console.log("🌱 Seeding Patyka Tarot database…");
+  console.log("🌱 Seeding Patyka Tarot database…\n");
 
   // ── Services ──────────────────────────────────────────────────────────
   const existing = await db.select().from(schema.services);
-  if (existing.length > 0) {
-    console.log(`ℹ️  ${existing.length} service(s) already exist — skipping.`);
-  } else {
-    console.log("   Inserting 3 seed services…");
-    await db.insert(schema.services).values(seedServices);
-    console.log("   ✅ Services seeded.");
 
-    // Log what was inserted so Patyka knows what to edit
-    for (const s of seedServices) {
-      console.log(`     - ${s.name}: $${s.priceCop.toLocaleString("es-CO")} COP / ${s.durationMin} min`);
+  if (existing.length > 0) {
+    // Check if the old schema (placeholder services) needs migration
+    const hasNewFields = existing[0].hasOwnProperty("availableDays");
+
+    if (hasNewFields) {
+      console.log("ℹ️  Services already have new fields — updating values…\n");
+      for (const service of seedServices) {
+        await db
+          .update(schema.services)
+          .set(service)
+          .where(eq(schema.services.name, service.name));
+      }
+      console.log("✅ Services updated.\n");
+    } else {
+      console.log("ℹ️  Services exist but missing new fields — dropping and recreating…\n");
+      await db.delete(schema.services);
+      await db.insert(schema.services).values(seedServices);
+      console.log("✅ Services recreated with new fields.\n");
     }
+  } else {
+    console.log("   Inserting 6 seed services…\n");
+    await db.insert(schema.services).values(seedServices);
+    console.log("✅ Services seeded.\n");
+  }
+
+  // Log all services
+  for (const s of seedServices) {
+    const price = s.priceCop > 0
+      ? `$${s.priceCop.toLocaleString("es-CO")} COP`
+      : "TBD";
+    console.log(
+      `     - ${s.name}: ${price} / ${s.durationMin > 0 ? `${s.durationMin} min` : "TBD"} / ${s.bookingType} / ${s.category}`
+    );
   }
 
   // ── Testimonials ──────────────────────────────────────────────────────
-  // Left empty intentionally — Patyka adds testimonials via DB UI.
-  // The SocialProof component shows a fallback message until data exists.
+  console.log("");
   const existingTestimonials = await db.select().from(schema.testimonials);
   if (existingTestimonials.length > 0) {
     console.log(`ℹ️  ${existingTestimonials.length} testimonial(s) already exist — skipping.`);
@@ -85,7 +169,7 @@ async function main() {
     console.log("      Patyka adds them later via DB UI — no code changes needed.");
   }
 
-  console.log("✅ Seed complete.");
+  console.log("\n✅ Seed complete.");
   await client.end();
 }
 

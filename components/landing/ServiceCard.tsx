@@ -2,13 +2,14 @@
 
 import type { Service } from '@/types';
 import LiquidGlassContainer from '@/components/layout/LiquidGlassContainer';
+import ServiceIcon from '@/components/brand/ServiceIcon';
 
 /**
  * Formats a price in Colombian Pesos using the es-CO locale.
  * Intl.NumberFormat handles thousand separators and the COP symbol
  * natively — no manual string munging needed.
  *
- * Example: 80000 → "$ 80.000"
+ * Example: 80000 → "$ 80.000"
  */
 function formatCOP(amount: number): string {
   return new Intl.NumberFormat('es-CO', {
@@ -28,59 +29,75 @@ interface Props {
  *
  * # Client component
  *
- * Marked 'use client' because it uses hover effects (scale + glow
- * shadow), which require CSS transitions that only work predictably
- * when rendered on the client.
+ * Marked 'use client' because it uses hover effects (spring-bounce
+ * + glow shadow), which require CSS transitions that only work
+ * predictably when rendered on the client.
  *
- * # Liquid Glass aesthetic
+ * # PDR v2.0 visual identity
  *
- * Wrapped in LiquidGlassContainer for the frosted glass effect.
- * On hover, the card scales to 103% and gains a subtle gold glow
- * shadow that reinforces the "cinematic" Mac 2026 aesthetic.
+ * Wrapped in LiquidGlassContainer with glass-primary depth and
+ * squircle-lg (16px) border-radius. On hover, a spring-bounce
+ * animation + golden glow shadow reinforce the tactile "liquid gel"
+ * premium feel.
  *
- * # Card layout
- *   - Duration badge (top-left, gold pill)
- *   - Price (top-right, gold bold)
- *   - Service name (heading, Instrument Serif)
- *   - Description (body text, DM Sans, muted)
+ * # Card layout (top to bottom)
+ *   - Icon (ServiceIcon by category) + channel badge (Web/WhatsApp)
+ *   - Service name (heading, Instrument Serif, bold)
+ *   - Description (text-base, DM Sans, muted — NEVER text-sm)
+ *   - Divider line
+ *   - Duration badge (glass-subtle pill) + price (gold, text-xl)
  */
 export default function ServiceCard({ service }: Props) {
+  const isWhatsappOnly = service.bookingType === 'whatsapp_only';
+
   return (
     <LiquidGlassContainer
       as="article"
-      className="group p-6 transition-all duration-300 hover:scale-[1.03] hover:shadow-[0_0_25px_rgba(139,92,246,0.15)]"
-      /**
-       * The scale+glow transition uses CSS transitions (duration-300)
-       * rather than JavaScript-driven animations. CSS transitions are
-       * GPU-accelerated in modern browsers and don't require rAF loops,
-       * making them ideal for simple hover effects like this.
-       *
-       * The glow is achieved via box-shadow with accent-gold at 12%
-       * opacity — subtle enough to feel premium, not tacky.
-       */
+      level="primary"
+      squircle="lg"
+      className="group p-6 spring-bounce hover:shadow-[0_0_25px_rgba(212,168,83,0.15)]"
     >
-      {/* ── Top row: duration badge + price ── */}
-      <div className="flex justify-between items-start mb-3">
-        {/* Duration pill — small gold badge */}
-        <span className="inline-block px-3 py-1 text-xs font-medium rounded-full bg-accent-gold/10 text-accent-gold border border-accent-gold/20">
-          {service.durationMin} min
-        </span>
+      {/* ── Icon + channel badge ── */}
+      <div className="flex justify-between items-start mb-4">
+        <ServiceIcon category={service.category} className="w-8 h-8" />
 
-        {/* Price in COP — right-aligned, gold accent */}
-        <span className="text-lg font-bold text-accent-gold tabular-nums">
-          {formatCOP(service.priceCop)}
+        {/* Channel badge — green for WhatsApp, gold for web booking */}
+        <span
+          className={`
+            inline-block px-3 py-1 text-xs md:text-lg font-medium rounded-full
+            ${
+              isWhatsappOnly
+                ? 'bg-green-500/10 text-green-400 border border-green-500/20'
+                : 'bg-accent-gold/10 text-accent-gold border border-accent-gold/20'
+            }
+          `}
+        >
+          {isWhatsappOnly ? 'Solo WhatsApp' : 'Agendar Online'}
         </span>
       </div>
 
-      {/* ── Service name (heading) ── */}
-      <h3 className="font-heading text-xl font-bold text-text-primary mb-2 group-hover:text-accent-gold/90 transition-colors">
+      {/* ── Service name ── */}
+      <h3 className="font-heading text-xl md:text-4xl font-bold text-text-primary mb-2 group-hover:text-accent-gold/90 transition-colors">
         {service.name}
       </h3>
 
-      {/* ── Description (body) ── */}
-      <p className="text-text-secondary text-sm leading-relaxed">
+      {/* ── Description — text-base minimum, never text-sm ── */}
+      <p className="text-text-secondary text-base md:text-2xl leading-relaxed mb-4">
         {service.description}
       </p>
+
+      {/* ── Divider + duration & price ── */}
+      <div className="flex justify-between items-center pt-4 border-t border-border-glass">
+        {/* Duration — glass-subtle pill */}
+        <span className="glass-subtle px-3 py-1 text-xs md:text-lg font-medium rounded-full text-text-secondary">
+          {service.durationMin} min
+        </span>
+
+        {/* Price — gold, text-xl, tabular-nums for alignment */}
+        <span className="text-xl md:text-4xl font-bold text-accent-gold tabular-nums">
+          {formatCOP(service.priceCop)}
+        </span>
+      </div>
     </LiquidGlassContainer>
   );
 }

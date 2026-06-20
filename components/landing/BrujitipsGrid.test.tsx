@@ -6,7 +6,7 @@
  */
 import React from "react";
 import { describe, it, expect, beforeAll, afterAll, vi } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { render } from "@testing-library/react";
 
 beforeAll(() => {
   vi.stubGlobal("IntersectionObserver", class {

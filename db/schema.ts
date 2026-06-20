@@ -73,6 +73,42 @@ export const services = pgTable("services", {
   /** Soft-delete: false hides the service from the catalog without deleting sessions */
   isActive: boolean("is_active").notNull().default(true),
 
+  /**
+   * Days of the week this service is offered (bitmask).
+   *
+   * Bit mapping:
+   *   Mon=1  Tue=2  Wed=4  Thu=8  Fri=16  Sat=32  Sun=64
+   *
+   * Examples: Mon+Tue+Thu=11, Wed+Fri=20, All days=127
+   */
+  availableDays: integer("available_days").notNull().default(127),
+
+  /**
+   * Available time slots for this service.
+   * Stored as a JSON array of "HH:mm" strings.
+   *
+   * Example: ["08:00", "10:30", "14:00"]
+   */
+  availableSlots: text("available_slots").notNull().default("[]"),
+
+  /**
+   * Booking channel type for scheduling logic.
+   *
+   *   - "web"            → bookable directly from the website
+   *   - "whatsapp_only"  → displays WhatsApp CTA, no online booking
+   */
+  bookingType: text("booking_type").notNull().default("web"),
+
+  /**
+   * Visual grouping category (Miller's Law: 7±2 groups max).
+   *
+   *   - "pregunta"  → single-question reading
+   *   - "tematica"  → themed spread (love, career, etc.)
+   *   - "completa"  → full comprehensive reading
+   *   - "energetico" → energy/aura reading
+   */
+  category: text("category").notNull().default("lectura"),
+
   createdAt: timestamp("created_at", { withTimezone: true })
     .notNull()
     .defaultNow(),
@@ -104,6 +140,12 @@ export const sessions = pgTable(
 
     /** Email entered during booking — used for Resend confirmation */
     customerEmail: text("customer_email").notNull(),
+
+    /** Nombre completo del cliente — obligatorio para confirmar cita por WhatsApp */
+    customerName: text("customer_name").notNull(),
+
+    /** WhatsApp del cliente — opcional, para contacto alternativo */
+    customerWhatsapp: text("customer_whatsapp"),
 
     /** When the session starts (Bogotá GMT-5, business hours 09:00-18:00) */
     scheduledAt: timestamp("scheduled_at", { withTimezone: true }).notNull(),
@@ -165,3 +207,44 @@ export const testimonials = pgTable("testimonials", {
     .notNull()
     .defaultNow(),
 });
+
+/**
+ * Social media statistics — manually updated via admin panel.
+ * Replaces hardcoded values in SocialProof component.
+ *
+ * Design:
+ *   - One row per platform+metric combination
+ *   - UNIQUE constraint prevents duplicate entries
+ *   - Simple integer value for easy counting and formatting
+ */
+export const socialStats = pgTable(
+  "social_stats",
+  {
+    id: serial().primaryKey(),
+
+    /** Platform identifier: 'tiktok', 'instagram', 'facebook' */
+    platform: text().notNull(),
+
+    /** Metric type: 'followers', 'likes', 'views' */
+    metric: text().notNull(),
+
+    /** Current value — updated manually via admin panel */
+    value: integer().notNull().default(0),
+
+    /** Display label shown to users: 'en TikTok', 'Me gusta' */
+    label: text().notNull(),
+
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow()
+      .$onUpdate(() => new Date()),
+  },
+  (table) => [
+    // Ensure one row per platform+metric
+    uniqueIndex("platform_metric_unique").on(table.platform, table.metric),
+  ]
+);

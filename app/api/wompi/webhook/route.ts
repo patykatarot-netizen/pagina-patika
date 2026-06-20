@@ -82,7 +82,7 @@ import { verifyWebhookSignature } from "@/lib/wompi";
 import { getAccessToken, createEvent } from "@/lib/google-calendar";
 import { sendConfirmationEmail } from "@/lib/resend";
 import { TIMEZONE } from "@/lib/constants";
-import type { WebhookPayload, WebhookTransaction } from "@/types";
+import type { WebhookTransaction } from "@/types";
 
 // ---------------------------------------------------------------------------
 // Route Handler — POST

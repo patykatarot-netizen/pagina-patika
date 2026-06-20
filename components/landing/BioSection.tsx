@@ -191,21 +191,21 @@ export default function BioSection() {
   return (
     <section id="conoceme" className="py-20 md:py-32 px-4">
       <div className="max-w-5xl mx-auto">
-        <h2 className="font-heading text-3xl md:text-4xl font-bold text-text-primary text-center mb-12">
+        <h2 className="font-heading text-3xl md:text-6xl font-bold text-text-primary text-center mb-12">
           Conocé a Patyka
         </h2>
 
         <div className="flex flex-col md:flex-row gap-8 md:gap-16 items-center">
           {/* ── Text column (left) ── */}
           <div className="flex-1 space-y-4">
-            <p className="text-text-secondary leading-relaxed text-sm md:text-base">
+            <p className="text-text-secondary leading-relaxed text-sm md:text-xl">
               Patyka es tarotista y creadora de contenido espiritual. Con más
               de <strong className="text-text-primary font-medium">10.000 seguidores en TikTok</strong>, comparte Brujitips y
               lecturas de tarot que han llegado a miles de personas en toda
               Latinoamérica.
             </p>
 
-            <p className="text-text-secondary leading-relaxed text-sm md:text-base">
+            <p className="text-text-secondary leading-relaxed text-sm md:text-xl">
               Su enfoque combina la sabiduría del tarot tradicional con una
               energía cercana y moderna. Cada sesión es un espacio seguro
               para explorar tus preguntas más profundas y encontrar la
@@ -218,7 +218,7 @@ export default function BioSection() {
                 href="https://www.tiktok.com/@patyka550"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="liquid-glass inline-flex items-center gap-2 px-4 py-2 text-sm text-accent-gold hover:text-text-primary transition-colors"
+                className="liquid-glass inline-flex items-center gap-2 px-4 py-2 text-sm md:text-xl text-accent-gold hover:text-text-primary transition-colors"
               >
                 <Sparkles className="w-4 h-4" />
                 Seguir en TikTok
@@ -227,7 +227,7 @@ export default function BioSection() {
                 href="https://www.instagram.com/patykatarot"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="liquid-glass inline-flex items-center gap-2 px-4 py-2 text-sm text-accent-purple hover:text-text-primary transition-colors"
+                className="liquid-glass inline-flex items-center gap-2 px-4 py-2 text-sm md:text-xl text-accent-purple hover:text-text-primary transition-colors"
               >
                 <Sparkles className="w-4 h-4" />
                 Instagram

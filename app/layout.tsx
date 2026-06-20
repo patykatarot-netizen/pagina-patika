@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Instrument_Serif, DM_Sans } from "next/font/google";
 import "./globals.css";
+import WhatsAppFloat from "@/components/layout/WhatsAppFloat";
 
 /*
  * Patyka Tarot — Root Layout
@@ -106,6 +107,7 @@ export default function RootLayout({
           Saltar al contenido principal
         </a>
         {children}
+        <WhatsAppFloat />
       </body>
     </html>
   );

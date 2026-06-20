@@ -46,7 +46,7 @@ function mockMatchMedia(matches: boolean) {
 }
 
 /** Create a stub IntersectionObserver that fires a callback immediately. */
-function mockIntersectionObserver(isIntersecting: boolean) {
+function mockIntersectionObserver() {
   let callback: IntersectionObserverCallback | null = null;
 
   const observer = vi.fn((cb: IntersectionObserverCallback) => {
@@ -222,7 +222,7 @@ describe("MobileCTA — interactions (Task 3.2)", () => {
     render(<MobileCTA />);
 
     // Button should be visible initially.
-    let link = screen.queryByRole("link", { name: /agendar/i });
+    const link = screen.queryByRole("link", { name: /agendar/i });
     expect(link).toBeInTheDocument();
     // The outer wrapper (link.parentElement.parentElement) should not have translate-y-full class.
     const outerWrapper = link!.parentElement!.parentElement!;

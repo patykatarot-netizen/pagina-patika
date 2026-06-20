@@ -1,7 +1,7 @@
 'use client';
 
-import Link from 'next/link';
-import { useCallback, useEffect, useRef } from 'react';
+import { MessageCircle } from 'lucide-react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 /**
  * Full-viewport Hero section with video background.
@@ -46,6 +46,7 @@ export default function Hero() {
   const fadingOutRef = useRef(false);
   const opacityRef = useRef(0);
   const rafRef = useRef<number | null>(null);
+  const [reducedMotion, setReducedMotion] = useState(false);
 
   /**
    * Smoothly animates the video's opacity to a target value over `duration` ms.
@@ -85,6 +86,15 @@ export default function Hero() {
     [],
   );
 
+  // ── Detect prefers-reduced-motion ──
+  useEffect(() => {
+    const mql = window.matchMedia('(prefers-reduced-motion: reduce)');
+    setReducedMotion(mql.matches);
+    const onChange = (e: MediaQueryListEvent) => setReducedMotion(e.matches);
+    mql.addEventListener('change', onChange);
+    return () => mql.removeEventListener('change', onChange);
+  }, []);
+
   useEffect(() => {
     const video = videoRef.current;
     if (!video) return;
@@ -92,6 +102,12 @@ export default function Hero() {
     // Only run loop logic if video has a source (will be added in PR #6)
     const hasSource = video.querySelector('source') !== null;
     if (!hasSource) return;
+
+    /** Sets opacity instantly — used when reduced motion is active. */
+    const setOpacityDirect = (value: number) => {
+      video.style.opacity = String(value);
+      opacityRef.current = value;
+    };
 
     // ── Fade-in after metadata loads ──
     const onLoadedMetadata = () => {
@@ -101,7 +117,11 @@ export default function Hero() {
         // Autoplay may be blocked by browser policy — the poster gradient
         // div (z-0) acts as a static fallback in that case.
       });
-      animateOpacity(1, FADE_DURATION_MS);
+      if (reducedMotion) {
+        setOpacityDirect(1);
+      } else {
+        animateOpacity(1, FADE_DURATION_MS);
+      }
     };
 
     // ── Start fade-out with FADE_LEAD_TIME seconds to spare ──
@@ -110,26 +130,39 @@ export default function Hero() {
       const timeLeft = video.duration - video.currentTime;
       if (timeLeft <= FADE_LEAD_TIME && !fadingOutRef.current) {
         fadingOutRef.current = true;
-        animateOpacity(0, FADE_DURATION_MS, () => {
-          // Fade complete — restart immediately (200ms total dissolve)
-          video.style.opacity = '0';
-          opacityRef.current = 0;
-          fadingOutRef.current = false;
+        if (reducedMotion) {
+          // No animation — instant restart
           video.currentTime = 0;
+          fadingOutRef.current = false;
           video.play().catch(() => {});
-          animateOpacity(1, FADE_DURATION_MS);
-        });
+        } else {
+          animateOpacity(0, FADE_DURATION_MS, () => {
+            // Fade complete — restart immediately (200ms total dissolve)
+            video.style.opacity = '0';
+            opacityRef.current = 0;
+            fadingOutRef.current = false;
+            video.currentTime = 0;
+            video.play().catch(() => {});
+            animateOpacity(1, FADE_DURATION_MS);
+          });
+        }
       }
     };
 
     // ── Safety net (should rarely fire since we restart during fade) ──
     const onEnded = () => {
-      video.style.opacity = '0';
-      opacityRef.current = 0;
-      fadingOutRef.current = false;
-      video.currentTime = 0;
-      video.play().catch(() => {});
-      animateOpacity(1, FADE_DURATION_MS);
+      if (reducedMotion) {
+        video.currentTime = 0;
+        fadingOutRef.current = false;
+        video.play().catch(() => {});
+      } else {
+        video.style.opacity = '0';
+        opacityRef.current = 0;
+        fadingOutRef.current = false;
+        video.currentTime = 0;
+        video.play().catch(() => {});
+        animateOpacity(1, FADE_DURATION_MS);
+      }
     };
 
     video.addEventListener('loadedmetadata', onLoadedMetadata);
@@ -147,7 +180,7 @@ export default function Hero() {
       video.removeEventListener('ended', onEnded);
       if (rafRef.current !== null) cancelAnimationFrame(rafRef.current);
     };
-  }, [animateOpacity]);
+  }, [animateOpacity, reducedMotion]);
 
   return (
     <section className="relative h-screen w-full overflow-hidden">
@@ -161,7 +194,7 @@ export default function Hero() {
         className="absolute inset-0 z-0"
         style={{
           background:
-            'radial-gradient(ellipse at 50% 50%, #1a1410 0%, #0a0a0f 70%)',
+            'radial-gradient(ellipse at 50% 50%, #1a0a3e 0%, #0d0520 70%)',
         }}
         aria-hidden="true"
       />
@@ -169,7 +202,7 @@ export default function Hero() {
       {/*
        * Video layer — positioned on top of the gradient (z-10).
        * Feather overlays (z-15) soften the top and bottom edges so the
-       * video blends seamlessly into the page background (#0a0a0f).
+       * video blends seamlessly into the page background (#0d0520).
        * loop={false} because we handle looping manually for the fade transition.
        */}
       <video
@@ -186,12 +219,28 @@ export default function Hero() {
       </video>
 
       {/*
-       * Feather overlays — fade the video edges into the page background
-       * so there's no hard cut between the video and the radial gradient.
-       * pointer-events-none ensures clicks pass through to the video.
-       */}
-      <div className="absolute top-0 left-0 right-0 z-15 h-24 md:h-32 bg-gradient-to-b from-[#0a0a0f] to-transparent pointer-events-none" />
-      <div className="absolute bottom-0 left-0 right-0 z-15 h-24 md:h-32 bg-gradient-to-t from-[#0a0a0f] to-transparent pointer-events-none" />
+        * Feather overlays — fade the video edges into the page background
+        * so there's no hard cut between the video and the radial gradient.
+        * pointer-events-none ensures clicks pass through to the video.
+        */}
+      <div className="absolute top-0 left-0 right-0 z-15 h-24 md:h-32 bg-gradient-to-b from-[#0d0520] to-transparent pointer-events-none" />
+      <div className="absolute bottom-0 left-0 right-0 z-15 h-24 md:h-32 bg-gradient-to-t from-[#0d0520] to-transparent pointer-events-none" />
+
+      {/*
+        * Animated Gradient Overlay — purple gradient that cyclically shifts
+        * position over 15s, adding depth and movement above the video.
+        * pointer-events-none ensures it never blocks clicks or interactions.
+        */}
+      <div
+        className="absolute inset-0 z-10 opacity-40 pointer-events-none"
+        style={{
+          background:
+            'linear-gradient(45deg, #0d0520, #1a0a3e, #7c3aed, #0d0520)',
+          backgroundSize: '400% 400%',
+          animation: 'gradient-shift 15s ease infinite',
+        }}
+        aria-hidden="true"
+      />
 
       {/* ─── Content overlay (z-20, above video) ─── */}
       <div className="relative z-20 flex flex-col items-center justify-center h-full px-4 text-center">
@@ -200,18 +249,36 @@ export default function Hero() {
           <span className="text-accent-gold">Patyka Tarot</span>
         </h1>
 
-        <p className="mt-6 text-lg md:text-xl text-text-secondary max-w-2xl">
+        <p className="mt-6 text-lg md:text-3xl text-text-secondary max-w-2xl">
           Más de 10.000 personas ya son parte de nuestra comunidad en TikTok.
           Encontrá claridad, energía y guía espiritual con lecturas de tarot en
           línea.
         </p>
 
-        <Link
-          href="#booking"
-          className="liquid-glass inline-flex items-center mt-8 px-8 py-4 text-lg font-medium text-accent-gold hover:text-text-primary hover:scale-[1.03] hover:shadow-[0_0_30px_rgba(139,92,246,0.3)] transition-all duration-300"
-        >
-          Agendar mi Sesión Ahora
-        </Link>
+        <div className="flex flex-col sm:flex-row gap-4 justify-center mt-8">
+          {/* CTA Principal */}
+          <a
+            href="#booking"
+            className="px-8 py-4 rounded-lg bg-accent-gold text-black font-bold text-base md:text-2xl
+                       hover:shadow-[0_0_25px_rgba(212,168,83,0.35)]
+                       transition-all duration-300 text-center"
+          >
+            Agendar Sesión
+          </a>
+
+          {/* CTA Secundario — WhatsApp */}
+          <a
+            href="https://wa.me/573018339558?text=Hola%20Patyka!%20Quiero%20hacer%20una%20pregunta%20puntual"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="px-8 py-4 rounded-lg border-2 border-green-500/30 text-green-400 font-bold text-base md:text-2xl
+                       hover:bg-green-500/10 hover:border-green-500/50
+                       transition-all duration-300 flex items-center justify-center gap-2"
+          >
+            <MessageCircle className="w-5 h-5" />
+            Pregunta Puntual
+          </a>
+        </div>
       </div>
     </section>
   );

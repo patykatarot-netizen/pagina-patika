@@ -164,6 +164,10 @@ const mockServices: Service[] = [
     priceCop: 50000,
     durationMin: 60,
     isActive: true,
+    availableDays: 127,
+    availableSlots: "[]",
+    bookingType: "web",
+    category: "completa",
     createdAt: new Date("2026-01-01"),
     updatedAt: new Date("2026-01-01"),
   },
@@ -174,6 +178,10 @@ const mockServices: Service[] = [
     priceCop: 30000,
     durationMin: 30,
     isActive: true,
+    availableDays: 127,
+    availableSlots: "[]",
+    bookingType: "web",
+    category: "pregunta",
     createdAt: new Date("2026-01-01"),
     updatedAt: new Date("2026-01-01"),
   },
@@ -204,16 +212,13 @@ async function advanceToStep3(user: ReturnType<typeof userEvent.setup>) {
   });
 }
 
-/** Enter email and advance to step 4. */
-async function advanceToStep4(user: ReturnType<typeof userEvent.setup>) {
+/** Fill in step 3 data (email, name) so the form is ready to submit. Does NOT accept terms. */
+async function completeStep3(user: ReturnType<typeof userEvent.setup>) {
   await advanceToStep3(user);
   const emailField = screen.getByTestId("email-field");
   await user.type(emailField, "cliente@email.com");
-  const continuarBtn = screen.getByRole("button", { name: /continuar/i });
-  await user.click(continuarBtn);
-  await waitFor(() => {
-    expect(screen.getByTestId("terms-checkbox")).toBeInTheDocument();
-  });
+  const nameInput = screen.getByLabelText(/nombre completo/i);
+  await user.type(nameInput, "Cliente Test");
 }
 
 // ============================================================
@@ -250,7 +255,7 @@ describe("BookingForm — aria-live error announcement (Task 4.1)", () => {
     const user = userEvent.setup();
     render(<BookingForm services={mockServices} />);
 
-    await advanceToStep4(user);
+    await completeStep3(user);
 
     // Accept terms to enable the Pay button
     const termsCheckbox = screen.getByTestId("terms-input");
@@ -272,7 +277,6 @@ describe("BookingForm — aria-live error announcement (Task 4.1)", () => {
     // The Pay button is disabled when terms are not accepted, so this
     // validation message can only be surfaced proactively. The aria-live
     // region must be structured to support both error and termsError.
-    const user = userEvent.setup();
     render(<BookingForm services={mockServices} />);
 
     // Verify the region is present and can hold terms-related errors.
@@ -291,7 +295,7 @@ describe("BookingForm — aria-live error announcement (Task 4.1)", () => {
     const user = userEvent.setup();
     render(<BookingForm services={mockServices} />);
 
-    await advanceToStep4(user);
+    await completeStep3(user);
 
     // Accept terms and trigger server error
     const termsCheckbox = screen.getByTestId("terms-input");
@@ -345,25 +349,27 @@ describe("BookingForm — focus management on step transitions (Task 4.2)", () =
     });
   });
 
-  it("focus moves to heading when transitioning from step 3 to step 4", async () => {
+  it("focus moves to heading when transitioning from step 2 to step 3", async () => {
     const user = userEvent.setup();
     render(<BookingForm services={mockServices} />);
 
-    await advanceToStep3(user);
+    await advanceToStep2(user);
 
-    const emailField = screen.getByTestId("email-field");
-    await user.type(emailField, "cliente@email.com");
+    // Select a slot and click Continuar to advance to step 3
+    const slotBtn = screen.getByTestId("slot-10am");
+    await user.click(slotBtn);
 
     const continuarBtn = screen.getByRole("button", { name: /continuar/i });
     await user.click(continuarBtn);
 
+    // Wait for step 3 to render
     await waitFor(() => {
-      expect(screen.getByTestId("terms-checkbox")).toBeInTheDocument();
+      expect(screen.getByTestId("email-input")).toBeInTheDocument();
     });
 
-    const step4Heading = screen.getByText("Confirmá tu reserva");
+    const step3Heading = screen.getByRole("heading", { name: "Datos y Pago" });
     await waitFor(() => {
-      expect(step4Heading).toHaveFocus();
+      expect(step3Heading).toHaveFocus();
     });
   });
 
@@ -430,7 +436,7 @@ describe("BookingForm — accessibility attributes (Task 4.3)", () => {
     const user = userEvent.setup();
     render(<BookingForm services={mockServices} />);
 
-    await advanceToStep4(user);
+    await completeStep3(user);
 
     // Accept terms to enable Pay button
     const termsCheckbox = screen.getByTestId("terms-input");
@@ -463,7 +469,7 @@ describe("BookingForm — accessibility attributes (Task 4.3)", () => {
     const user = userEvent.setup();
     render(<BookingForm services={mockServices} />);
 
-    await advanceToStep4(user);
+    await completeStep3(user);
 
     // The checkbox should be rendered and accessible
     const checkbox = screen.getByTestId("terms-input");

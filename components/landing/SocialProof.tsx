@@ -92,10 +92,10 @@ function StatCounter({ stat, isVisible }: { stat: Stat; isVisible: boolean }) {
 
   return (
     <div className="text-center">
-      <span className="block font-heading text-4xl md:text-5xl font-bold text-accent-gold tabular-nums">
+      <span className="block font-heading text-4xl md:text-7xl font-bold text-accent-gold tabular-nums">
         +{formatStat(count)}
       </span>
-      <span className="text-sm text-text-secondary mt-1 block">
+      <span className="text-sm md:text-xl text-text-secondary mt-1 block">
         {stat.label}
       </span>
     </div>
@@ -165,10 +165,10 @@ export default function SocialProof({ stats, testimonials }: Props) {
     <section id="testimonials" className="py-20 md:py-32 px-4">
       <div className="max-w-7xl mx-auto" ref={sectionRef}>
         {/* ── Section heading ── */}
-        <h2 className="font-heading text-3xl md:text-4xl font-bold text-text-primary text-center mb-4">
+        <h2 className="font-heading text-3xl md:text-6xl font-bold text-text-primary text-center mb-4">
           Lo que dice nuestra comunidad
         </h2>
-        <p className="text-text-secondary text-center max-w-lg mx-auto mb-12 text-sm md:text-base">
+        <p className="text-text-secondary text-center max-w-lg mx-auto mb-12 text-sm md:text-xl">
           Más de 10.000 personas ya confían en Patyka Tarot para sus lecturas
           espirituales.
         </p>
@@ -194,10 +194,10 @@ export default function SocialProof({ stats, testimonials }: Props) {
                 className="p-6"
               >
                 <Quote className="w-5 h-5 text-accent-gold/30 mb-3" />
-                <p className="text-text-secondary text-sm leading-relaxed italic mb-3">
+                <p className="text-text-secondary text-sm md:text-xl leading-relaxed italic mb-3">
                   &ldquo;{t.content}&rdquo;
                 </p>
-                <cite className="text-accent-gold/80 text-xs not-italic font-medium">
+                <cite className="text-accent-gold/80 text-xs md:text-lg not-italic font-medium">
                   — {t.authorName}
                 </cite>
               </LiquidGlassContainer>
@@ -206,7 +206,7 @@ export default function SocialProof({ stats, testimonials }: Props) {
         ) : (
           /* Empty testimonials — friendly fallback */
           <LiquidGlassContainer className="max-w-lg mx-auto p-8 text-center">
-            <p className="text-text-secondary text-sm leading-relaxed">
+            <p className="text-text-secondary text-sm md:text-xl leading-relaxed">
               Pronto compartiremos las experiencias de nuestra comunidad.
               Mientras tanto, conocé nuestros servicios y agendá tu sesión.
             </p>

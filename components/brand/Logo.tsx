@@ -17,7 +17,7 @@
  * - Center: 4-point sparkle/star (The Star arcana)
  * - The 24x34 viewBox gives a ~1:1.4 card proportion
  */
-export default function Logo({ className = 'h-6 w-auto', gold = false }: { className?: string; gold?: boolean }) {
+export default function Logo({ className = 'h-6 w-auto' }: { className?: string }) {
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"

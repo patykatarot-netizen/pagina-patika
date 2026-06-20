@@ -59,7 +59,7 @@ export default function ServiceSelector({
             key={service.id}
             type="button"
             onClick={() => onSelect(service)}
-            className={`text-left w-full transition-all duration-300 ${
+            className={`text-left w-full spring-smooth min-w-0 ${
               isSelected
                 ? 'ring-2 ring-accent-gold shadow-[0_0_20px_rgba(139,92,246,0.15)]'
                 : 'hover:scale-[1.02]'
@@ -68,33 +68,33 @@ export default function ServiceSelector({
           >
             <LiquidGlassContainer
               as="div"
-              className="p-5 cursor-pointer"
+              className="p-4 md:p-6 cursor-pointer overflow-hidden"
             >
               {/* Top row: duration badge + price */}
-              <div className="flex justify-between items-start mb-2">
-                <span className="inline-block px-2.5 py-0.5 text-xs font-medium rounded-full bg-accent-gold/10 text-accent-gold border border-accent-gold/20">
+              <div className="flex justify-between items-start gap-2 mb-3">
+                <span className="inline-block px-2.5 py-1 text-sm md:text-xl font-semibold rounded-full bg-accent-gold/10 text-accent-gold border border-accent-gold/20 flex-shrink-0 whitespace-nowrap">
                   {service.durationMin} min
                 </span>
-                <span className="text-base font-bold text-accent-gold tabular-nums">
+                <span className="text-xl md:text-3xl font-bold text-accent-gold tabular-nums text-right truncate">
                   {formatCOP(service.priceCop)}
                 </span>
               </div>
 
               {/* Service name */}
-              <h3 className="font-heading text-lg font-bold text-text-primary mb-1">
+              <h3 className="font-heading text-lg md:text-2xl font-bold text-text-primary mb-2 truncate">
                 {service.name}
               </h3>
 
               {/* Description */}
-              <p className="text-text-secondary text-sm leading-relaxed line-clamp-2">
+              <p className="text-text-secondary text-base md:text-xl leading-relaxed line-clamp-2">
                 {service.description}
               </p>
 
               {/* Selected indicator */}
               {isSelected && (
-                <div className="mt-3 flex items-center gap-1.5 text-accent-gold text-xs font-medium">
-                  <span className="w-2 h-2 rounded-full bg-accent-gold" />
-                  Seleccionado
+                <div className="mt-3 flex items-center gap-1.5 text-sm md:text-lg text-accent-gold font-medium">
+                  <span className="w-2 h-2 rounded-full bg-accent-gold flex-shrink-0" />
+                  <span className="truncate">Seleccionado</span>
                 </div>
               )}
             </LiquidGlassContainer>

@@ -1,44 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState, useCallback } from 'react';
-import { Play, X } from 'lucide-react';
-
-/**
- * Inline SVG wand/star icon — replaces the 🪄 emoji for consistent
- * rendering across all platforms and proper accessibility.
- *
- * Purely decorative: aria-hidden="true" — the heading text conveys
- * the full meaning.
- */
-function WandIcon() {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      viewBox="0 0 24 24"
-      className="w-7 h-7 md:w-8 md:h-8 inline-block align-middle"
-      aria-hidden="true"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.5"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      {/* Wand shaft */}
-      <line x1="4" y1="20" x2="16" y2="8" stroke="var(--accent-gold, #d4a853)" strokeWidth="2" />
-      {/* Star sparkle */}
-      <path
-        d="M16 3l1.5 4.5L22 9l-4.5 1.5L16 15l-1.5-4.5L10 9l4.5-1.5z"
-        fill="var(--accent-gold, #d4a853)"
-        fillOpacity="0.6"
-        stroke="var(--accent-gold, #d4a853)"
-        strokeWidth="1"
-      />
-      {/* Small magic sparkles */}
-      <circle cx="7" cy="5" r="1" fill="var(--accent-purple, #8b5cf6)" stroke="none" />
-      <circle cx="20" cy="16" r="1" fill="var(--accent-purple, #8b5cf6)" stroke="none" />
-    </svg>
-  );
-}
+import { Play, X, Volume2, VolumeX } from 'lucide-react';
 
 const BRUJITIPS_VIDEOS = [
   {
@@ -70,39 +33,31 @@ interface ThumbnailData {
 }
 
 /**
- * Brujitips Grid — click-to-play TikTok video cards with real thumbnails.
+ * Brujitips Grid — click-to-play TikTok video cards with iframe player.
  *
- * # UX Philosophy
+ * # Sound enabled by default
  *
- * El usuario controla QUÉ ve y CUÁNDO. Nada se reproduce sin su click.
- * Solo UN video activo a la vez — clickear uno nuevo desactiva el anterior.
+ * Uses TikTok's iframe player v1 with postMessage API to send
+ * play + unmute commands on user click. This bypasses the browser's
+ * autoplay-mute policy because the click is a valid user gesture.
  *
  * # How it works
  *
- *   1. Al scrollear a la sección, se obtienen thumbnails via oEmbed API
- *      y se precarga TikTok embed.js.
+ *   1. Al scrollear a la sección, se obtienen thumbnails via oEmbed API.
  *   2. Cada card muestra el thumbnail real + overlay con play button.
- *   3. Click → se activa el embed de TikTok (solo para esa card).
- *   4. Click en otra card → se destruye el embed anterior, se crea el nuevo.
- *   5. Click en la card activa → se desactiva (vuelve al thumbnail).
- *
- * # Visual
- *
- * - Thumbnail real del video como fondo de la card
- * - Gradiente oscuro en la parte inferior para legibilidad del label
- * - Play button semitransparente con glow hover
- * - Hover: escala 1.02 + glow dorado en borde
- * - Activo: borde acent-gold + glow
+ *   3. Click → se crea un iframe con el player de TikTok.
+ *   4. Cuando el iframe carga, se envía postMessage de play + unmute.
+ *   5. Click en otra card → se destruye el iframe anterior, se crea el nuevo.
+ *   6. Click en la card activa → se desactiva (vuelve al thumbnail).
  */
 export default function BrujitipsGrid() {
   const sectionRef = useRef<HTMLDivElement>(null);
-  const embedContainerRef = useRef<HTMLDivElement>(null);
+  const iframeRef = useRef<HTMLIFrameElement>(null);
   const [isVisible, setIsVisible] = useState(false);
   const [thumbnails, setThumbnails] = useState<Record<string, ThumbnailData>>({});
-  const [thumbnailsLoading, setThumbnailsLoading] = useState(false);
   const [activeId, setActiveId] = useState<string | null>(null);
-  const [embedScriptLoaded, setEmbedScriptLoaded] = useState(false);
-  const [embedReady, setEmbedReady] = useState(false);
+  const [iframeLoaded, setIframeLoaded] = useState(false);
+  const [isMuted, setIsMuted] = useState(false);
 
   // ── IntersectionObserver: activate section when scrolled into view ──
   useEffect(() => {
@@ -123,7 +78,7 @@ export default function BrujitipsGrid() {
     return () => observer.disconnect();
   }, []);
 
-  // ── Fetch thumbnails from oEmbed proxy + preload embed.js ──
+  // ── Fetch thumbnails from oEmbed proxy ──
   useEffect(() => {
     if (!isVisible) return;
 
@@ -131,7 +86,6 @@ export default function BrujitipsGrid() {
     const params = new URLSearchParams();
     videoUrls.forEach((u) => params.append('url', u));
 
-    setThumbnailsLoading(true);
     fetch(`/api/tiktok/thumbnails?${params}`)
       .then((r) => r.json())
       .then((data) => {
@@ -143,68 +97,80 @@ export default function BrujitipsGrid() {
       })
       .catch(() => {
         // thumbnails quedan vacíos — los placeholders siguen funcionando
-      })
-      .finally(() => setThumbnailsLoading(false));
+      });
+  }, [isVisible]);
 
-    // Pre-load TikTok embed.js (se necesita cuando el usuario haga click)
-    if (!embedScriptLoaded) {
-      const existing = document.querySelector<HTMLScriptElement>(
-        'script[src*="tiktok.com/embed.js"]',
-      );
-      if (!existing) {
-        const script = document.createElement('script');
-        script.src = 'https://www.tiktok.com/embed.js';
-        script.async = true;
-        script.onload = () => setEmbedScriptLoaded(true);
-        document.body.appendChild(script);
-      } else {
-        setEmbedScriptLoaded(true);
-      }
-    }
-  }, [isVisible, embedScriptLoaded]);
-
-  // ── When activeId changes, wait for DOM to settle, then signal embed ready ──
+  // ── When iframe loads, send play + unmute via postMessage ──
   useEffect(() => {
-    if (!activeId) {
-      setEmbedReady(false);
-      return;
-    }
-    // Small delay ensures the blockquote is in the DOM before TikTok processes it
-    const timer = setTimeout(() => setEmbedReady(true), 150);
-    return () => clearTimeout(timer);
-  }, [activeId]);
+    if (!iframeLoaded || !activeId) return;
 
-  // ── Re-process TikTok embeds when embedReady becomes true ──
-  useEffect(() => {
-    if (!embedReady || !activeId) return;
-
-    // TikTok embed.js procesa blockquotes automáticamente via MutationObserver.
-    // Si no lo hace, force-process recreando temporalmente el script.
-    const timer = setTimeout(() => {
-      // Verificar si TikTok procesó el embed (buscamos si hay un iframe)
-      const container = embedContainerRef.current;
-      if (container && !container.querySelector('iframe')) {
-        // Re-load embed.js con cache-busting como fallback
-        const script = document.createElement('script');
-        script.src = `https://www.tiktok.com/embed.js?v=${Date.now()}`;
-        script.async = true;
-        document.body.appendChild(script);
+    const sendPlayAndUnmute = () => {
+      if (iframeRef.current?.contentWindow) {
+        // Play
+        iframeRef.current.contentWindow.postMessage(
+          { type: 'play', 'x-tiktok-player': true },
+          'https://www.tiktok.com',
+        );
+        // Unmute
+        iframeRef.current.contentWindow.postMessage(
+          { type: 'unmute', 'x-tiktok-player': true },
+          'https://www.tiktok.com',
+        );
+        setIsMuted(false);
       }
-    }, 500);
+    };
 
+    // Small delay to ensure iframe is ready
+    const timer = setTimeout(sendPlayAndUnmute, 300);
     return () => clearTimeout(timer);
-  }, [embedReady, activeId]);
+  }, [iframeLoaded, activeId]);
+
+  // ── Listen for player state changes ──
+  useEffect(() => {
+    const handleMessage = (event: MessageEvent) => {
+      if (!event.origin.includes('tiktok.com')) return;
+      if (event.data?.type === 'pause') {
+        // Player paused — could update UI if needed
+      }
+    };
+
+    window.addEventListener('message', handleMessage);
+    return () => window.removeEventListener('message', handleMessage);
+  }, []);
 
   const handleCardClick = useCallback(
     (id: string) => {
       if (activeId === id) {
-        setActiveId(null); // desactivar
+        setActiveId(null);
+        setIframeLoaded(false);
       } else {
-        setActiveId(id); // activar (desactiva el anterior)
+        setActiveId(id);
+        setIframeLoaded(false); // Reset for new iframe
       }
     },
     [activeId],
   );
+
+  const toggleMute = useCallback((e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (iframeRef.current?.contentWindow) {
+      if (isMuted) {
+        iframeRef.current.contentWindow.postMessage(
+          { type: 'unmute', 'x-tiktok-player': true },
+          'https://www.tiktok.com',
+        );
+        setIsMuted(false);
+      } else {
+        iframeRef.current.contentWindow.postMessage(
+          { type: 'mute', 'x-tiktok-player': true },
+          'https://www.tiktok.com',
+        );
+        setIsMuted(true);
+      }
+    }
+  }, [isMuted]);
+
+  const activeVideo = BRUJITIPS_VIDEOS.find((v) => v.id === activeId);
 
   return (
     <section id="brujitips" className="py-20 md:py-32 px-4">
@@ -220,7 +186,7 @@ export default function BrujitipsGrid() {
           Los rituales y consejos que han cautivado a miles en TikTok
         </p>
 
-        {/* ── Grid: 2 cols mobile, 4 cols desktop ── */}
+        {/* ── Grid: 2 cols mobile (2x2), 4 cols desktop ── */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
           {BRUJITIPS_VIDEOS.map((video) => {
             const thumb = thumbnails[video.id];
@@ -233,7 +199,7 @@ export default function BrujitipsGrid() {
                 onClick={() => handleCardClick(video.id)}
                 className={`
                   group relative overflow-hidden rounded-xl aspect-[3/4] md:aspect-[9/16]
-                  transition-all duration-300 ease-out
+                  spring-smooth
                   focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-gold
                   ${isActive
                     ? 'ring-2 ring-accent-gold shadow-[0_0_30px_rgba(139,92,246,0.4)] scale-[1.02] z-10'
@@ -242,46 +208,57 @@ export default function BrujitipsGrid() {
                 `}
               >
                 {isActive ? (
-                  /* ── TikTok Embed activo ── */
-                  <div
-                    ref={embedContainerRef}
-                    className="absolute inset-0 z-20 bg-black"
-                  >
-                    <blockquote
-                      className="tiktok-embed w-full h-full"
-                      cite={video.url}
-                      data-video-id={video.id}
-                      style={{ maxWidth: '100%', minWidth: 'auto' }}
-                    >
-                      <section>
-                        <a
-                          href={video.url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                        >
-                          {video.label}
-                        </a>
-                      </section>
-                    </blockquote>
+                  /* ── TikTok Iframe Player activo ── */
+                  <div className="absolute inset-0 z-20 bg-black">
+                    <iframe
+                      ref={iframeRef}
+                      src={`https://www.tiktok.com/player/v1/${video.id}?&music_info=1&description=1`}
+                      className="w-full h-full border-0"
+                      allow="autoplay; fullscreen; encrypted-media"
+                      onLoad={() => setIframeLoaded(true)}
+                      title={video.label}
+                    />
 
-                    {/* Botón cerrar — visible sobre el embed */}
-                    <div
-                      role="button"
-                      tabIndex={0}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setActiveId(null);
-                      }}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter' || e.key === ' ') {
+                    {/* Controles overlay */}
+                    <div className="absolute top-2 right-2 z-30 flex gap-2">
+                      {/* Toggle mute */}
+                      <div
+                        role="button"
+                        tabIndex={0}
+                        onClick={toggleMute}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' || e.key === ' ') {
+                            e.stopPropagation();
+                            toggleMute(e as unknown as React.MouseEvent);
+                          }
+                        }}
+                        className="w-8 h-8 rounded-full bg-black/60 backdrop-blur-sm flex items-center justify-center text-white/80 hover:text-white hover:bg-black/80 transition-colors cursor-pointer"
+                        aria-label={isMuted ? 'Activar sonido' : 'Silenciar'}
+                      >
+                        {isMuted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
+                      </div>
+
+                      {/* Botón cerrar */}
+                      <div
+                        role="button"
+                        tabIndex={0}
+                        onClick={(e) => {
                           e.stopPropagation();
                           setActiveId(null);
-                        }
-                      }}
-                      className="absolute top-2 right-2 z-30 w-8 h-8 rounded-full bg-black/60 backdrop-blur-sm flex items-center justify-center text-white/80 hover:text-white hover:bg-black/80 transition-colors cursor-pointer"
-                      aria-label="Cerrar video"
-                    >
-                      <X className="w-4 h-4" />
+                          setIframeLoaded(false);
+                        }}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' || e.key === ' ') {
+                            e.stopPropagation();
+                            setActiveId(null);
+                            setIframeLoaded(false);
+                          }
+                        }}
+                        className="w-8 h-8 rounded-full bg-black/60 backdrop-blur-sm flex items-center justify-center text-white/80 hover:text-white hover:bg-black/80 transition-colors cursor-pointer"
+                        aria-label="Cerrar video"
+                      >
+                        <X className="w-4 h-4" />
+                      </div>
                     </div>
                   </div>
                 ) : (
@@ -310,9 +287,8 @@ export default function BrujitipsGrid() {
                           w-14 h-14 md:w-16 md:h-16 rounded-full
                           bg-white/15 backdrop-blur-sm
                           flex items-center justify-center
-                          transition-all duration-300
+                          spring-smooth
                           group-hover:bg-white/25 group-hover:scale-110
-                          ${thumbnailsLoading ? 'opacity-50' : ''}
                         "
                       >
                         <Play

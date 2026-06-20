@@ -30,46 +30,11 @@
  * @returns Array of {@link Slot} objects with HH:mm time and availability
  */
 
-import { and, eq, or, gt, sql, inArray } from 'drizzle-orm';
+import { and, eq, gt, sql, inArray } from 'drizzle-orm';
 import { db } from '@/lib/db';
-import { sessions } from '@/db/schema';
-import {
-  BUSINESS_START_HOUR,
-  BUSINESS_END_HOUR,
-  SLOT_DURATION_MINUTES,
-  BUFFER_MINUTES,
-  TIMEZONE,
-  UTC_OFFSET,
-} from '@/lib/constants';
+import { sessions, services } from '@/db/schema';
+import { UTC_OFFSET, TIMEZONE } from '@/lib/constants';
 import type { Slot } from '@/types';
-
-// ---------------------------------------------------------------------------
-// Helpers
-// ---------------------------------------------------------------------------
-
-/**
- * Generates all possible 60‑minute slot start times for a given date
- * within Patyka's business hours (09:00–17:00 Bogotá), with a 15‑min
- * buffer between consecutive slots.
- *
- * @returns Array of `{ time: "HH:mm", iso: "YYYY-MM-DDTHH:mm:ss±HH:MM" }`
- */
-function generateSlotTimes(date: string): { time: string; iso: string }[] {
-  const slots: { time: string; iso: string }[] = [];
-  const startMinutes = BUSINESS_START_HOUR * 60; // 540 = 09:00
-  const endMinutes = BUSINESS_END_HOUR * 60; // 1020 = 17:00
-  const interval = SLOT_DURATION_MINUTES + BUFFER_MINUTES; // 75 min
-
-  for (let m = startMinutes; m <= endMinutes; m += interval) {
-    const hours = Math.floor(m / 60);
-    const mins = m % 60;
-    const time = `${String(hours).padStart(2, '0')}:${String(mins).padStart(2, '0')}`;
-    const iso = `${date}T${time}:00${UTC_OFFSET}`; // e.g. "2026-05-08T09:00:00-05:00"
-    slots.push({ time, iso });
-  }
-
-  return slots;
-}
 
 // ---------------------------------------------------------------------------
 // Server Action
@@ -79,14 +44,29 @@ export async function getSlots(
   serviceId: number,
   date: string
 ): Promise<Slot[]> {
-  // ── 1. Generate all possible slot times for this date ──
-  const allSlots = generateSlotTimes(date);
+  // ── 1. Get service's allowed slots from DB ──
+  const service = await db
+    .select({ availableSlots: services.availableSlots })
+    .from(services)
+    .where(eq(services.id, serviceId))
+    .limit(1);
 
-  // ── 2. Query booked sessions that are still active ──
-  //
-  // Active sessions are those with status 'pending' or 'approved'
-  // whose `expires_at` has not yet passed. We filter by date using
-  // PostgreSQL's AT TIME ZONE to correctly handle Bogotá GMT‑5.
+  if (!service.length) return [];
+
+  const allowedSlots = JSON.parse(
+    service[0].availableSlots || '[]',
+  ) as string[];
+
+  // If no slots defined, fallback to empty
+  if (!allowedSlots.length) return [];
+
+  // ── 2. Build ISO timestamps for each allowed slot ──
+  const allSlots = allowedSlots.map((time) => ({
+    time,
+    iso: `${date}T${time}:00${UTC_OFFSET}`,
+  }));
+
+  // ── 3. Query booked sessions that are still active ──
   const booked = await db
     .select({
       time: sql<string>`TO_CHAR(${sessions.scheduledAt} AT TIME ZONE ${sql.raw(`'${TIMEZONE}'`)}, 'HH24:MI')`,
@@ -95,19 +75,16 @@ export async function getSlots(
     .where(
       and(
         eq(sessions.serviceId, serviceId),
-        // Filter to this specific date in Bogotá timezone
         sql`DATE(${sessions.scheduledAt} AT TIME ZONE ${sql.raw(`'${TIMEZONE}'`)}) = ${date}`,
-        // Only pending or approved sessions block a slot
         inArray(sessions.status, ['pending', 'approved'] as const),
-        // Query‑time TTL: expired sessions don't block slots
         gt(sessions.expiresAt, sql`NOW()`),
       )
     );
 
-  // ── 3. Build a set of blocked HH:mm times ──
+  // ── 4. Build a set of blocked HH:mm times ──
   const blockedTimes = new Set(booked.map((b) => b.time));
 
-  // ── 4. Map slots to the return type ──
+  // ── 5. Map slots to the return type ──
   return allSlots.map((s) => ({
     time: s.time,
     available: !blockedTimes.has(s.time),

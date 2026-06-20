@@ -14,14 +14,13 @@ import TermsCheckbox from './TermsCheckbox';
 // ---------------------------------------------------------------------------
 
 /** Booking flow step identifiers */
-type Step = 1 | 2 | 3 | 4;
+type Step = 1 | 2 | 3;
 
 /** Labels for each step in the indicator */
 const STEP_LABELS: Record<Step, string> = {
   1: 'Servicio',
   2: 'Horario',
-  3: 'Email',
-  4: 'Confirmar',
+  3: 'Datos y Pago',
 };
 
 // ---------------------------------------------------------------------------
@@ -49,7 +48,7 @@ function buildAmountLabel(priceCop: number): string {
 function StepIndicator({ currentStep }: { currentStep: Step }) {
   return (
     <div className="flex items-center justify-center gap-2 mb-8">
-      {([1, 2, 3, 4] as Step[]).map((step) => {
+      {([1, 2, 3] as Step[]).map((step) => {
         const isActive = step === currentStep;
         const isCompleted = step < currentStep;
         return (
@@ -57,7 +56,7 @@ function StepIndicator({ currentStep }: { currentStep: Step }) {
             {/* Dot / number */}
             <div
               className={`
-                w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold
+                w-10 h-10 md:w-12 md:h-12 rounded-full flex items-center justify-center text-base md:text-2xl font-bold
                 transition-all duration-300
                 ${
                   isActive
@@ -70,7 +69,7 @@ function StepIndicator({ currentStep }: { currentStep: Step }) {
               aria-current={isActive ? 'step' : undefined}
             >
               {isCompleted ? (
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                <svg className="w-5 h-5 md:w-6 md:h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                 </svg>
               ) : (
@@ -78,16 +77,16 @@ function StepIndicator({ currentStep }: { currentStep: Step }) {
               )}
             </div>
             {/* Connector line (not after last step) */}
-            {step < 4 && (
+            {step < 3 && (
               <div
-                className={`w-6 h-0.5 rounded transition-colors duration-300 ${
+                className={`w-8 h-1 rounded transition-colors duration-300 ${
                   step < currentStep ? 'bg-accent-gold/50' : 'bg-white/8'
                 }`}
               />
             )}
             {/* Label (desktop only) */}
             <span
-              className={`hidden sm:inline text-xs transition-colors duration-300 ${
+              className={`hidden sm:inline text-base md:text-2xl transition-colors duration-300 ${
                 isActive
                   ? 'text-accent-gold font-medium'
                   : isCompleted
@@ -117,8 +116,7 @@ interface Props {
  *
  *   1. **Servicio** — Select a tarot reading service
  *   2. **Horario**  — Pick a date and available time slot
- *   3. **Email**    — Enter contact email (validated inline)
- *   4. **Confirmar** — Review, accept terms, and pay via Wompi
+ *   3. **Datos y Pago** — Enter contact details, review, accept terms, and pay via Wompi
  *
  * # State management
  *
@@ -140,6 +138,8 @@ export default function BookingForm({ services }: Props) {
   const [selectedTime, setSelectedTime] = useState<string | null>(null); // "HH:mm"
   const [selectedISO, setSelectedISO] = useState<string | null>(null); // Full ISO
   const [email, setEmail] = useState('');
+  const [customerName, setCustomerName] = useState('');
+  const [customerWhatsapp, setCustomerWhatsapp] = useState('');
   const [acceptedTerms, setAcceptedTerms] = useState(false);
 
   // ── UI state ──
@@ -171,15 +171,6 @@ export default function BookingForm({ services }: Props) {
     setStep(3);
   }, [selectedTime]);
 
-  const handleNextFromEmail = useCallback(() => {
-    if (!email || !email.includes('@')) {
-      setError('Ingresá un email válido para continuar.');
-      return;
-    }
-    setError(null);
-    setStep(4);
-  }, [email]);
-
   const handleSubmit = useCallback(async () => {
     // Validate terms
     if (!acceptedTerms) {
@@ -189,7 +180,7 @@ export default function BookingForm({ services }: Props) {
     setTermsError(null);
     setError(null);
 
-    if (!selectedService || !selectedISO || !email) {
+    if (!selectedService || !selectedISO || !email || !customerName) {
       setError('Faltan datos. Volvé a los pasos anteriores y completalos.');
       return;
     }
@@ -201,6 +192,8 @@ export default function BookingForm({ services }: Props) {
         serviceId: selectedService.id,
         scheduledAt: selectedISO,
         customerEmail: email,
+        customerName: customerName,
+        customerWhatsapp: customerWhatsapp || undefined,
       });
 
       if (result.error) {
@@ -218,7 +211,7 @@ export default function BookingForm({ services }: Props) {
       setError('Ocurrió un error inesperado. Intentá de nuevo.');
       setLoading(false);
     }
-  }, [selectedService, selectedISO, email, acceptedTerms]);
+  }, [selectedService, selectedISO, email, customerName, customerWhatsapp, acceptedTerms]);
 
   const handleBack = useCallback(() => {
     setError(null);
@@ -238,7 +231,7 @@ export default function BookingForm({ services }: Props) {
   return (
     <LiquidGlassContainer
       as="section"
-      className="w-full max-w-2xl mx-auto p-6 md:p-8"
+      className="w-full max-w-7xl mx-auto p-8 md:p-12"
     >
       {/* Step indicator */}
       <StepIndicator currentStep={step} />
@@ -260,11 +253,11 @@ export default function BookingForm({ services }: Props) {
           <h3
             ref={headingRef}
             tabIndex={-1}
-            className="font-heading text-xl font-bold text-text-primary mb-1 focus:outline-none"
+            className="font-heading text-2xl md:text-5xl font-bold text-text-primary mb-2 focus:outline-none"
           >
             Elegí tu servicio
           </h3>
-          <p className="text-text-secondary text-sm mb-5">
+          <p className="text-text-secondary text-base md:text-2xl mb-6">
             Seleccioná el tipo de lectura que querés agendar.
           </p>
           <ServiceSelector
@@ -281,20 +274,20 @@ export default function BookingForm({ services }: Props) {
           <h3
             ref={headingRef}
             tabIndex={-1}
-            className="font-heading text-xl font-bold text-text-primary mb-1 focus:outline-none"
+            className="font-heading text-2xl md:text-5xl font-bold text-text-primary mb-2 focus:outline-none"
           >
             Elegí fecha y horario
           </h3>
-          <p className="text-text-secondary text-sm mb-5">
+          <p className="text-text-secondary text-base md:text-2xl mb-6">
             {selectedService.name} — {selectedService.durationMin} min
           </p>
           <SlotPicker
-            serviceId={selectedService.id}
+            service={selectedService}
             selectedTime={selectedTime}
             onSelectTime={handleSelectTime}
           />
           {error && (
-            <p className="mt-3 text-red-400 text-sm" role="alert">
+            <p className="mt-3 text-red-400 text-sm md:text-xl" role="alert">
               {error}
             </p>
           )}
@@ -302,7 +295,7 @@ export default function BookingForm({ services }: Props) {
             <button
               type="button"
               onClick={handleBack}
-              className="liquid-glass px-5 py-2.5 text-sm text-text-secondary
+              className="liquid-glass px-5 py-2.5 text-sm md:text-xl text-text-secondary
                          hover:text-text-primary transition-colors"
             >
               ← Volver
@@ -311,7 +304,7 @@ export default function BookingForm({ services }: Props) {
               type="button"
               onClick={handleNextFromSlots}
               disabled={!selectedTime}
-              className="px-6 py-2.5 rounded-lg text-sm font-bold
+              className="px-6 py-2.5 rounded-lg text-sm md:text-xl font-bold
                          bg-accent-gold text-black
                           hover:shadow-[0_0_20px_rgba(139,92,246,0.3)]
                           disabled:opacity-40 disabled:cursor-not-allowed
@@ -323,19 +316,23 @@ export default function BookingForm({ services }: Props) {
         </div>
       )}
 
-      {/* ── Step 3: Email ── */}
-      {step === 3 && (
+      {/* ── Step 3: Data + Payment ── */}
+      {step === 3 && selectedService && selectedTime && (
         <div>
           <h3
             ref={headingRef}
             tabIndex={-1}
-            className="font-heading text-xl font-bold text-text-primary mb-1 focus:outline-none"
+            className="font-heading text-2xl md:text-5xl font-bold text-text-primary mb-2 focus:outline-none"
           >
-            Tu email
+            Datos y Pago
           </h3>
-          <p className="text-text-secondary text-sm mb-5">
-            Te enviaremos la confirmación y el link de Google Meet a este email.
+          <p className="text-text-secondary text-base md:text-2xl mb-6">
+            Completá tus datos y revisá la reserva antes de pagar.
           </p>
+
+          {/* ── Contact fields ── */}
+
+          {/* Email */}
           <EmailInput
             value={email}
             onChange={(v) => {
@@ -344,47 +341,42 @@ export default function BookingForm({ services }: Props) {
             }}
             serverError={error}
           />
-          <div className="flex gap-3 mt-6">
-            <button
-              type="button"
-              onClick={handleBack}
-              className="liquid-glass px-5 py-2.5 text-sm text-text-secondary
-                         hover:text-text-primary transition-colors"
-            >
-              ← Volver
-            </button>
-            <button
-              type="button"
-              onClick={handleNextFromEmail}
-              disabled={!email || !email.includes('@')}
-              className="px-6 py-2.5 rounded-lg text-sm font-bold
-                         bg-accent-gold text-black
-                         hover:shadow-[0_0_20px_rgba(139,92,246,0.3)]
-                         disabled:opacity-40 disabled:cursor-not-allowed
-                         transition-all duration-200"
-            >
-              Continuar
-            </button>
+
+          <div className="mt-4 space-y-4">
+            {/* Nombre completo */}
+            <div>
+              <label htmlFor="customer-name" className="block text-base md:text-2xl font-medium text-text-secondary mb-2">
+                Nombre completo
+              </label>
+              <input
+                id="customer-name"
+                type="text"
+                value={customerName}
+                onChange={(e) => setCustomerName(e.target.value)}
+                placeholder="Tu nombre completo"
+                className="glass-secondary w-full px-4 py-3 text-text-primary text-base md:text-2xl focus:outline-none focus:ring-2 focus:ring-accent-gold/40"
+                required
+              />
+            </div>
+
+            {/* WhatsApp */}
+            <div>
+              <label htmlFor="customer-whatsapp" className="block text-base md:text-2xl font-medium text-text-secondary mb-2">
+                WhatsApp (opcional)
+              </label>
+              <input
+                id="customer-whatsapp"
+                type="tel"
+                value={customerWhatsapp}
+                onChange={(e) => setCustomerWhatsapp(e.target.value)}
+                placeholder="+57 300 000 0000"
+                className="glass-secondary w-full px-4 py-3 text-text-primary text-base md:text-2xl focus:outline-none focus:ring-2 focus:ring-accent-gold/40"
+              />
+            </div>
           </div>
-        </div>
-      )}
 
-      {/* ── Step 4: Confirmation + Pay ── */}
-      {step === 4 && selectedService && selectedTime && (
-        <div>
-          <h3
-            ref={headingRef}
-            tabIndex={-1}
-            className="font-heading text-xl font-bold text-text-primary mb-1 focus:outline-none"
-          >
-            Confirmá tu reserva
-          </h3>
-          <p className="text-text-secondary text-sm mb-5">
-            Revisá los datos antes de proceder al pago.
-          </p>
-
-          {/* Summary card */}
-          <div className="liquid-glass p-4 mb-5 space-y-2 text-sm">
+          {/* ── Summary card ── */}
+          <div className="liquid-glass p-4 mt-5 space-y-2 text-sm md:text-xl">
             <div className="flex justify-between">
               <span className="text-text-secondary">Servicio</span>
               <span className="text-text-primary font-medium">
@@ -397,12 +389,6 @@ export default function BookingForm({ services }: Props) {
                 {selectedTime}
               </span>
             </div>
-            <div className="flex justify-between">
-              <span className="text-text-secondary">Email</span>
-              <span className="text-text-primary font-medium truncate max-w-[200px]">
-                {email}
-              </span>
-            </div>
             <div className="flex justify-between border-t border-border-glass pt-2 mt-2">
               <span className="text-text-primary font-medium">Total</span>
               <span className="text-accent-gold font-bold tabular-nums">
@@ -411,30 +397,69 @@ export default function BookingForm({ services }: Props) {
             </div>
           </div>
 
-          {/* Terms checkbox */}
-          <TermsCheckbox
-            checked={acceptedTerms}
-            onChange={(checked) => {
-              setAcceptedTerms(checked);
-              if (checked) setTermsError(null);
-            }}
-            error={termsError}
-          />
+          {/* ── Legal notes ── */}
+
+          {/* Comprobante note */}
+          <div className="glass-subtle p-4 rounded-lg mt-4 space-y-2">
+            <p className="text-text-secondary text-sm md:text-xl">
+              Una vez realizado el pago, enviá tu{' '}
+              <a
+                href="https://wa.me/573018339558?text=Hola%20Patyka!%20Env%C3%ADo%20mi%20comprobante%20de%20pago"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-green-400 hover:text-green-300 underline font-bold transition-colors"
+              >
+                comprobante por WhatsApp
+              </a>{' '}
+              (+57 301 833 9558) con tu{' '}
+              <strong className="text-text-primary">nombre completo</strong> para confirmar tu cita.
+            </p>
+          </div>
+
+          {/* Western Union note */}
+          <div className="glass-subtle p-4 rounded-lg mt-3">
+            <p className="text-text-secondary text-sm md:text-xl">
+              🌍 El{' '}
+              <strong className="text-text-primary">único medio de pago para clientes del extranjero</strong>{' '}
+              es <strong className="text-text-primary">Western Union</strong>.{' '}
+              <a
+                href="https://wa.me/573018339558?text=Hola%20Patyka!%20Necesito%20coordinar%20un%20pago%20por%20Western%20Union"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-green-400 hover:text-green-300 underline font-bold transition-colors"
+              >
+                Contactá por WhatsApp
+              </a>{' '}
+              para coordinar.
+            </p>
+          </div>
+
+          {/* ── Terms checkbox ── */}
+          <div className="mt-4">
+            <TermsCheckbox
+              checked={acceptedTerms}
+              onChange={(checked) => {
+                setAcceptedTerms(checked);
+                if (checked) setTermsError(null);
+              }}
+              error={termsError}
+            />
+          </div>
 
           {/* Global error */}
           {error && (
-            <p className="mt-4 text-red-400 text-sm" role="alert">
+            <p className="mt-4 text-red-400 text-sm md:text-xl" role="alert">
               {error}
             </p>
           )}
 
-          {/* Actions */}
+          {/* ── Actions ── */}
           <div className="flex gap-3 mt-6">
             <button
               type="button"
               onClick={handleBack}
               disabled={loading}
-              className="liquid-glass px-5 py-2.5 text-sm text-text-secondary
+              className="liquid-glass px-5 py-2.5 text-sm md:text-xl text-text-secondary
                          hover:text-text-primary transition-colors
                          disabled:opacity-40"
             >
@@ -443,10 +468,10 @@ export default function BookingForm({ services }: Props) {
             <button
               type="button"
               onClick={handleSubmit}
-              disabled={loading || !acceptedTerms}
-              className="flex-1 px-6 py-3 rounded-lg text-sm font-bold
+              disabled={loading || !email || !email.includes('@') || !customerName || !acceptedTerms}
+              className="flex-1 px-6 py-3 rounded-lg text-sm md:text-xl font-bold
                          bg-accent-gold text-black
-                          hover:shadow-[0_0_25px_rgba(139,92,246,0.35)]
+                         hover:shadow-[0_0_25px_rgba(139,92,246,0.35)]
                          disabled:opacity-40 disabled:cursor-not-allowed
                          transition-all duration-200
                          flex items-center justify-center gap-2"

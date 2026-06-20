@@ -156,7 +156,7 @@ export default function Nav() {
   return (
     <>
       <nav
-        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
+        className={`fixed top-0 left-0 right-0 z-50 spring-smooth ${
           scrolled
             ? 'bg-bg-primary/80 backdrop-blur-lg border-b border-border-glass'
             : 'bg-transparent'
@@ -171,7 +171,7 @@ export default function Nav() {
               aria-label="Patyka Tarot — Ir al inicio"
             >
               <Logo className="h-7 w-auto text-accent-gold" />
-              <span className="text-lg font-semibold tracking-wide">Patyka</span>
+              <span className="text-lg md:text-3xl font-semibold tracking-wide">Patyka</span>
             </Link>
 
             {/* Desktop nav links — hidden below md breakpoint */}
@@ -182,7 +182,7 @@ export default function Nav() {
                   <Link
                     key={link.href}
                     href={link.href}
-                    className={`text-sm tracking-wide transition-colors ${
+                    className={`text-sm md:text-xl tracking-wide transition-colors ${
                       isActive
                         ? 'text-accent-gold font-medium'
                         : 'text-text-secondary hover:text-text-primary'
@@ -197,7 +197,7 @@ export default function Nav() {
             {/* Desktop CTA — hidden on mobile (replaced by drawer) */}
             <Link
               href="#booking"
-              className="hidden md:inline-flex liquid-glass items-center px-4 py-2 text-sm font-medium text-accent-gold hover:text-text-primary hover:shadow-[0_0_20px_rgba(139,92,246,0.3)] transition-all duration-300"
+              className="hidden md:inline-flex liquid-glass items-center px-4 py-2 text-sm md:text-xl font-medium text-accent-gold hover:text-text-primary hover:shadow-[0_0_20px_rgba(139,92,246,0.3)] spring-smooth"
             >
               Agendar Sesión
             </Link>
@@ -212,9 +212,9 @@ export default function Nav() {
                 aria-expanded={isMenuOpen}
               >
                 {isMenuOpen ? (
-                  <X className="h-6 w-6 transition-transform duration-300 rotate-0" />
+                  <X className="h-6 w-6 spring-bounce rotate-0" />
                 ) : (
-                  <Menu className="h-6 w-6 transition-transform duration-300" />
+                  <Menu className="h-6 w-6 spring-bounce" />
                 )}
               </button>
             )}
@@ -229,7 +229,7 @@ export default function Nav() {
           role="dialog"
           aria-modal="true"
           aria-label="Navegación"
-          className="fixed inset-y-0 right-0 z-[60] w-72 bg-bg-primary/95 backdrop-blur-xl translate-x-0 transition-transform duration-300"
+          className="fixed inset-y-0 right-0 z-[60] w-72 bg-bg-primary/95 backdrop-blur-xl translate-x-0 spring-bounce"
           onKeyDown={handleDrawerKeyDown}
         >
           <div className="flex flex-col pt-20 px-6 gap-4">
@@ -254,7 +254,7 @@ export default function Nav() {
             <Link
               href="#booking"
               onClick={closeMenu}
-              className="min-h-[44px] flex items-center justify-center mt-4 liquid-glass px-4 py-3 text-base font-medium text-accent-gold hover:text-text-primary hover:shadow-[0_0_20px_rgba(139,92,246,0.3)] transition-all duration-300"
+              className="min-h-[44px] flex items-center justify-center mt-4 liquid-glass px-4 py-3 text-base font-medium text-accent-gold hover:text-text-primary hover:shadow-[0_0_20px_rgba(139,92,246,0.3)] spring-smooth"
             >
               Agendar Sesión
             </Link>

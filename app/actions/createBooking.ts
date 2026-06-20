@@ -70,6 +70,14 @@ const BookingInputSchema = z.object({
     .string()
     .min(1, 'El email es requerido')
     .email('Ingresá un email válido (ej: nombre@email.com)'),
+
+  /** Customer full name */
+  customerName: z
+    .string()
+    .min(2, 'El nombre completo es obligatorio.'),
+
+  /** Optional WhatsApp number for contact */
+  customerWhatsapp: z.string().optional(),
 });
 
 // ---------------------------------------------------------------------------
@@ -101,7 +109,7 @@ export async function createBooking(
     const firstError = parsed.error.errors[0]?.message ?? 'Datos inválidos';
     return { error: firstError };
   }
-  const { serviceId, scheduledAt, customerEmail } = parsed.data;
+  const { serviceId, scheduledAt, customerEmail, customerName, customerWhatsapp } = parsed.data;
 
   // ── 2. Double‑click guard ──
   const dedupeKey = `${serviceId}|${scheduledAt}|${customerEmail}`;
@@ -172,6 +180,8 @@ export async function createBooking(
     await db.insert(sessions).values({
       serviceId,
       customerEmail,
+      customerName,
+      customerWhatsapp: customerWhatsapp ?? null,
       scheduledAt: scheduledDate,
       status: 'pending',
       wompiReference,

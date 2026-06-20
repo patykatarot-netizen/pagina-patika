@@ -11,6 +11,16 @@
 // Domain Types (match Drizzle schema)
 // ---------------------------------------------------------------------------
 
+// ---------------------------------------------------------------------------
+// Booking & Category Types
+// ---------------------------------------------------------------------------
+
+/** Booking channel: direct web booking vs WhatsApp-only */
+export type BookingType = "web" | "whatsapp_only";
+
+/** Visual grouping category (Miller's Law: 7±2 groups max) */
+export type ServiceCategory = "pregunta" | "tematica" | "completa" | "energetico";
+
 /** A tarot reading service Patyka offers */
 export interface Service {
   id: number;
@@ -21,6 +31,26 @@ export interface Service {
   /** Session duration in minutes */
   durationMin: number;
   isActive: boolean;
+  /**
+   * Days of the week this service is offered (bitmask).
+   *
+   * Bit mapping:
+   *   Mon=1  Tue=2  Wed=4  Thu=8  Fri=16  Sat=32  Sun=64
+   *
+   * Examples: Mon+Tue+Thu=11, Wed+Fri=20, All days=127
+   */
+  availableDays: number;
+  /**
+   * Available time slots for this service.
+   * Stored as a JSON array of "HH:mm" strings.
+   *
+   * Example: ["08:00", "10:30", "14:00"]
+   */
+  availableSlots: string;
+  /** Booking channel type */
+  bookingType: BookingType;
+  /** Visual grouping category */
+  category: ServiceCategory;
   /** Drizzle returns Date objects for timestamp columns — not strings */
   createdAt: Date;
   updatedAt: Date;
@@ -31,6 +61,10 @@ export interface Session {
   id: number;
   serviceId: number;
   customerEmail: string;
+  /** Nombre completo del cliente */
+  customerName: string;
+  /** WhatsApp del cliente (opcional) */
+  customerWhatsapp: string | null;
   /** ISO 8601 — when the session starts (Bogotá GMT-5) */
   scheduledAt: string;
   status: SessionStatus;
