@@ -1,39 +1,24 @@
 /**
  * Admin Panel — Social Stats Management
  *
- * Best practices (Next.js + Context7):
- *   - Server Component that renders a client form
- *   - Uses Server Action for form submission
- *   - Validates input with Zod on the server
- *   - Revalidates cache after successful update
- *
- * Security:
- *   - Hidden route (/admin/stats) — not linked from the main site
- *   - In production, add authentication middleware
- *   - For now, uses a simple "secret" query param for basic protection
+ * Each stat has its own form to avoid FormData collision when
+ * multiple inputs share the same name.
  */
 
 import { redirect } from 'next/navigation';
 import { getSocialStats, updateSocialStat } from '@/app/actions/updateSocialStats';
 import LiquidGlassContainer from '@/components/layout/LiquidGlassContainer';
 
-/**
- * Wrapper for Next.js 15 compatibility — form actions must return void.
- */
 async function handleUpdateStat(formData: FormData) {
   'use server';
   await updateSocialStat(formData);
 }
 
-/**
- * Simple secret check — in production, replace with proper auth.
- * The secret is stored in an env var to avoid hardcoding.
- */
 function checkSecret(secret?: string) {
   const expected = process.env.ADMIN_SECRET;
-  if (!expected) return true; // No secret configured — allow access
+  if (!expected) return true;
   if (secret !== expected) {
-    redirect('/'); // Unauthorized — redirect to home
+    redirect('/');
   }
 }
 
@@ -47,7 +32,6 @@ export default async function AdminStatsPage({
 
   const stats = await getSocialStats();
 
-  // Default stats if none exist yet
   const defaultStats = [
     { platform: 'tiktok', metric: 'followers', value: 10000, label: 'en TikTok' },
     { platform: 'tiktok', metric: 'likes', value: 63900, label: 'Me gusta' },
@@ -66,12 +50,12 @@ export default async function AdminStatsPage({
         </p>
 
         <LiquidGlassContainer className="p-6 md:p-8">
-          <form action={handleUpdateStat} className="space-y-6">
+          <div className="space-y-8">
             {currentStats.map((stat, i) => (
-              <fieldset key={i} className="space-y-3">
-                <legend className="text-accent-gold font-medium capitalize">
+              <form key={i} action={handleUpdateStat} className="space-y-4">
+                <h3 className="text-accent-gold font-medium capitalize text-lg">
                   {stat.platform} — {stat.metric}
-                </legend>
+                </h3>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
@@ -112,22 +96,21 @@ export default async function AdminStatsPage({
                   </div>
                 </div>
 
-                {/* Hidden fields to identify which stat is being updated */}
                 <input type="hidden" name="platform" value={stat.platform} />
                 <input type="hidden" name="metric" value={stat.metric} />
-              </fieldset>
-            ))}
 
-            <button
-              type="submit"
-              className="w-full px-6 py-3 rounded-lg text-sm font-bold
-                         bg-accent-gold text-black
-                         hover:shadow-[0_0_25px_rgba(139,92,246,0.35)]
-                         transition-all duration-200"
-            >
-              Guardar Cambios
-            </button>
-          </form>
+                <button
+                  type="submit"
+                  className="px-6 py-2.5 rounded-lg text-sm font-bold
+                             bg-accent-gold text-black
+                             hover:shadow-[0_0_25px_rgba(139,92,246,0.35)]
+                             transition-all duration-200"
+                >
+                  Guardar
+                </button>
+              </form>
+            ))}
+          </div>
         </LiquidGlassContainer>
 
         <p className="text-text-secondary/50 text-xs text-center mt-8">

@@ -1,4 +1,4 @@
-import { Sparkles } from 'lucide-react';
+import { MessageCircle } from 'lucide-react';
 
 /**
  * Tarot-themed inline SVG illustration.
@@ -212,27 +212,17 @@ export default function BioSection() {
               claridad que buscás.
             </p>
 
-            {/* ── Social CTAs ── */}
-            <div className="flex gap-4 pt-4">
-              <a
-                href="https://www.tiktok.com/@patyka550"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="liquid-glass inline-flex items-center gap-2 px-4 py-2 text-sm md:text-xl text-accent-gold hover:text-text-primary transition-colors"
-              >
-                <Sparkles className="w-4 h-4" />
-                Seguir en TikTok
-              </a>
-              <a
-                href="https://www.instagram.com/patykatarot"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="liquid-glass inline-flex items-center gap-2 px-4 py-2 text-sm md:text-xl text-accent-purple hover:text-text-primary transition-colors"
-              >
-                <Sparkles className="w-4 h-4" />
-                Instagram
-              </a>
-            </div>
+            <a
+              href="https://wa.me/573018339558?text=Hola%20Patyka!%20Quiero%20agendar%20una%20sesión"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 px-4 py-2 text-sm md:text-xl
+                         rounded-lg bg-green-500/10 border border-green-500/20
+                         text-green-400 hover:bg-green-500/20 spring-smooth font-medium"
+            >
+              <MessageCircle className="w-4 h-4" />
+              Escribime por WhatsApp
+            </a>
           </div>
 
           {/* ── Decorative column (right) — only on md+ ── */}

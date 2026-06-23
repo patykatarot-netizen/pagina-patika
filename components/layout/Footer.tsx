@@ -1,43 +1,5 @@
 import Link from 'next/link';
-import { Music, Camera, MessageCircle } from 'lucide-react';
-
-/**
- * Lucide doesn't include social brand logos (design choice), so we use
- * representative icons: Music (TikTok), Camera (Instagram), MessageCircle (WhatsApp).
- *
- * Each social button uses liquid-glass circular styling:
- * - Rounded-full container with backdrop blur
- * - Icon + label in a column layout
- * - Primary social (TikTok) gets a subtle gold accent border
- */
-
-interface SocialLink {
-  href: string;
-  label: string;
-  Icon: typeof Music;
-  primary: boolean;
-}
-
-const SOCIALS: SocialLink[] = [
-  {
-    href: 'https://www.tiktok.com/@patyka550',
-    label: 'TikTok',
-    Icon: Music,
-    primary: true,
-  },
-  {
-    href: 'https://www.instagram.com/patykatarot',
-    label: 'Instagram',
-    Icon: Camera,
-    primary: false,
-  },
-  {
-    href: 'https://wa.me/573018339558',
-    label: 'WhatsApp',
-    Icon: MessageCircle,
-    primary: false,
-  },
-];
+import { MessageCircle } from 'lucide-react';
 
 export default function Footer() {
   return (
@@ -59,31 +21,6 @@ export default function Footer() {
             <MessageCircle className="w-5 h-5 text-green-400" />
             <span className="text-green-400 font-bold text-base md:text-2xl">+57 301 833 9558</span>
           </a>
-        </div>
-
-        {/* Social buttons — circular liquid-glass styling */}
-        <div className="flex flex-wrap justify-center gap-6 mb-8">
-          {SOCIALS.map(({ href, label, Icon, primary }) => (
-            <a
-              key={label}
-              href={href}
-              target="_blank"
-              rel="noopener noreferrer"
-              className={`liquid-glass flex flex-col items-center justify-center w-24 h-24 rounded-full spring-smooth hover:scale-105 ${
-                primary
-                  ? 'border-accent-gold/40 hover:border-accent-gold/70'
-                  : 'hover:border-text-secondary/30'
-              }`}
-              aria-label={`Seguir en ${label}`}
-            >
-              <Icon
-                className={`w-6 h-6 ${
-                  primary ? 'text-accent-gold' : 'text-text-secondary'
-                }`}
-              />
-              <span className="text-xs md:text-lg mt-1.5 text-text-secondary">{label}</span>
-            </a>
-          ))}
         </div>
 
         {/* Copyright + legal */}
