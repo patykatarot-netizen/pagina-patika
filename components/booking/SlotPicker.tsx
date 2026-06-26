@@ -1,9 +1,9 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { MessageCircle } from 'lucide-react';
 import { getSlots } from '@/app/actions/getSlots';
-import { UTC_OFFSET } from '@/lib/constants';
+import { UTC_OFFSET, CATEGORY_SLOT_CONSTRAINTS } from '@/lib/constants';
 import type { Slot, Service } from '@/types';
 
 // ---------------------------------------------------------------------------
@@ -85,8 +85,39 @@ export default function SlotPicker({
   selectedTime,
   onSelectTime,
 }: Props) {
+  // ── Business invariant enforcement (Ley de Hick) ──
+  // Hardcoded constraints OVERRIDE database values for categories
+  // with legally-defined schedules. This ensures the frontend enforces
+  // the correct rules even if the DB is misconfigured.
+  const constraint = CATEGORY_SLOT_CONSTRAINTS[service.category];
+
+  const effectiveDays = useMemo(() => {
+    if (!constraint) return service.availableDays;
+    if (service.availableDays !== constraint.days) {
+      console.warn(
+        `[SlotPicker] DB availableDays (${service.availableDays}) for "${service.name}" ` +
+        `(category: ${service.category}) does not match invariant (${constraint.days}). ` +
+        `Using invariant value.`,
+      );
+    }
+    return constraint.days;
+  }, [service.availableDays, service.name, service.category, constraint]);
+
+  const effectiveSlots = useMemo(() => {
+    if (!constraint) return JSON.parse(service.availableSlots || '[]') as string[];
+    const dbSlots = JSON.parse(service.availableSlots || '[]') as string[];
+    if (JSON.stringify(dbSlots.sort()) !== JSON.stringify([...constraint.slots].sort())) {
+      console.warn(
+        `[SlotPicker] DB availableSlots for "${service.name}" ` +
+        `(category: ${service.category}) do not match invariant. ` +
+        `Using invariant slots.`,
+      );
+    }
+    return constraint.slots;
+  }, [service.availableSlots, service.name, service.category, constraint]);
+
   // ── Hooks: must be called unconditionally at top level ──
-  const initialDate = computeInitialDate(service.availableDays);
+  const initialDate = computeInitialDate(effectiveDays);
 
   const [date, setDate] = useState(initialDate);
   const [slots, setSlots] = useState<Slot[]>([]);
@@ -102,12 +133,10 @@ export default function SlotPicker({
     try {
       const result = await getSlots(service.id, date);
 
-      // Filter server-returned slots against the service's allowed slots
-      const allowedSlots = JSON.parse(
-        service.availableSlots || '[]',
-      ) as string[];
-      const filtered = allowedSlots.length
-        ? result.filter((slot) => allowedSlots.includes(slot.time))
+      // Filter server-returned slots against the effective allowed slots
+      // (uses hardcoded invariant for constrained categories, DB fallback for others)
+      const filtered = effectiveSlots.length
+        ? result.filter((slot) => effectiveSlots.includes(slot.time))
         : result; // If no allowedSlots are defined, show all server slots
 
       setSlots(filtered);
@@ -118,7 +147,7 @@ export default function SlotPicker({
     } finally {
       setLoading(false);
     }
-  }, [service.id, service.bookingType, service.availableSlots, date]);
+  }, [service.id, service.bookingType, effectiveSlots, date]);
 
   useEffect(() => {
     if (service.bookingType !== 'whatsapp_only') {
@@ -158,7 +187,7 @@ export default function SlotPicker({
   const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newDate = e.target.value;
     const parsed = new Date(newDate + 'T12:00:00'); // noon to avoid TZ shifts
-    if (!isDayAvailable(parsed, service.availableDays)) {
+    if (!isDayAvailable(parsed, effectiveDays)) {
       // Silently ignore: don't update the date state
       return;
     }

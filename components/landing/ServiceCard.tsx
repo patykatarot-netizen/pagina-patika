@@ -49,6 +49,7 @@ interface Props {
  */
 export default function ServiceCard({ service }: Props) {
   const isWhatsappOnly = service.bookingType === 'whatsapp_only';
+  const isComingSoon = service.priceCop === 0 && service.durationMin === 0;
 
   return (
     <LiquidGlassContainer
@@ -61,18 +62,20 @@ export default function ServiceCard({ service }: Props) {
       <div className="flex justify-between items-start mb-4">
         <ServiceIcon category={service.category} className="w-8 h-8" />
 
-        {/* Channel badge — green for WhatsApp, gold for web booking */}
+        {/* Channel badge — green for WhatsApp, gold for web booking, amber for coming soon */}
         <span
           className={`
             inline-block px-3 py-1 text-xs md:text-lg font-medium rounded-full
             ${
-              isWhatsappOnly
-                ? 'bg-green-500/10 text-green-400 border border-green-500/20'
-                : 'bg-accent-gold/10 text-accent-gold border border-accent-gold/20'
+              isComingSoon
+                ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20'
+                : isWhatsappOnly
+                  ? 'bg-green-500/10 text-green-400 border border-green-500/20'
+                  : 'bg-accent-gold/10 text-accent-gold border border-accent-gold/20'
             }
           `}
         >
-          {isWhatsappOnly ? 'Solo WhatsApp' : 'Agendar Online'}
+          {isComingSoon ? 'Próximamente' : isWhatsappOnly ? 'Solo WhatsApp' : 'Agendar Online'}
         </span>
       </div>
 
@@ -88,15 +91,23 @@ export default function ServiceCard({ service }: Props) {
 
       {/* ── Divider + duration & price ── */}
       <div className="flex justify-between items-center pt-4 border-t border-border-glass">
-        {/* Duration — glass-subtle pill */}
-        <span className="glass-subtle px-3 py-1 text-xs md:text-lg font-medium rounded-full text-text-secondary">
-          {service.durationMin} min
-        </span>
+        {/* Duration — glass-subtle pill, or "Próximamente" for unreleased services */}
+        {isComingSoon ? (
+          <span className="glass-subtle px-3 py-1 text-xs md:text-lg font-medium rounded-full text-amber-400">
+            Próximamente
+          </span>
+        ) : (
+          <span className="glass-subtle px-3 py-1 text-xs md:text-lg font-medium rounded-full text-text-secondary">
+            {service.durationMin} min
+          </span>
+        )}
 
-        {/* Price — gold, text-xl, tabular-nums for alignment */}
-        <span className="text-xl md:text-4xl font-bold text-accent-gold tabular-nums">
-          {formatCOP(service.priceCop)}
-        </span>
+        {/* Price — gold, text-xl, tabular-nums; hidden for coming soon */}
+        {!isComingSoon && (
+          <span className="text-xl md:text-4xl font-bold text-accent-gold tabular-nums">
+            {formatCOP(service.priceCop)}
+          </span>
+        )}
       </div>
     </LiquidGlassContainer>
   );

@@ -66,3 +66,36 @@ export const BUFFER_MINUTES = 15;
  */
 export const SLOT_TTL_MS = 15 * 60 * 1000; // 900000 ms
 export const SLOT_TTL_MINUTES = 15;
+
+// ---------------------------------------------------------------------------
+// Business Invariants — Slot & Day Constraints (Ley de Hick)
+// ---------------------------------------------------------------------------
+
+/**
+ * Hardcoded slot/day constraints per service category.
+ *
+ * These are BUSINESS INVARIANTS — they override whatever the database says.
+ * If the DB has incorrect values, the frontend still enforces the correct
+ * business rules. This is intentional: the invariants must survive DB
+ * misconfiguration.
+ *
+ * Bitmask semantics: 1=Lun, 2=Mar, 4=Mié, 8=Jue, 16=Vie, 32=Sáb, 64=Dom
+ */
+export const CATEGORY_SLOT_CONSTRAINTS: Record<
+  string,
+  { days: number; slots: string[] }
+> = {
+  completa: {
+    // Mon + Tue + Thu = 1 + 2 + 8 = 11
+    days: 11,
+    slots: ['08:00', '09:30', '11:00', '14:00', '15:30', '17:00'],
+  },
+  tematica: {
+    // Wed + Fri = 4 + 16 = 20
+    days: 20,
+    slots: [
+      '08:00', '09:00', '10:00', '11:00', '12:00',
+      '14:00', '15:00', '16:00', '17:00',
+    ],
+  },
+};
