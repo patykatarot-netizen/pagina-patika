@@ -157,7 +157,7 @@ export default function SlotPicker({
 
   // ── WhatsApp‑only early return (after hooks) ──
   if (service.bookingType === 'whatsapp_only') {
-    const whatsappUrl = `https://wa.me/573018339558?text=Hola%20Patyka!%20Quiero%20agendar%20una%20${encodeURIComponent(service.name)}`;
+    const whatsappUrl = `https://wa.me/573018339558?text=Hola%20Patyka!%20Quiero%20agendar%20${encodeURIComponent(service.name)}`;
     return (
       <div className="glass-secondary p-6 text-center space-y-4">
         <p className="text-text-secondary text-base">
